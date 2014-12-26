@@ -1,10 +1,7 @@
 package com.tom_e_white.mastermind;
 
 import com.google.common.collect.*;
-import org.jacop.constraints.Not;
-import org.jacop.constraints.Or;
-import org.jacop.constraints.PrimitiveConstraint;
-import org.jacop.constraints.XeqC;
+import org.jacop.constraints.*;
 import org.jacop.core.IntVar;
 import org.jacop.core.Store;
 import org.jacop.search.*;
@@ -57,6 +54,8 @@ public class TestScores {
 //                    for (int l = 0; l < 6; l++) {
 //                        List<Integer> secret = move(i, j, k, l);
         List<Integer> secret = Scores.randomMove();
+        // TODO: don't just go one step from 0123 - how to improve walk through?
+        // TODO: choose colours to change based on how much info they gave in earlier mutations?
                         reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 1, 2, 4), 3, store, v);
                         reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 1, 5, 3), 2, store, v);
                         reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 4, 2, 3), 1, store, v);
@@ -75,6 +74,7 @@ public class TestScores {
 
         boolean result = search.labeling(store, select);
 
+        System.out.println(search.getSolutionListener().solutionsNo());
         search.printAllSolutions();
 
     }
@@ -92,25 +92,28 @@ public class TestScores {
         int oldCol = move1.get(diffPos);
         int newCol = move2.get(diffPos);
         if (wd == 0) {
+            System.out.println(oldCol + " does not appear in " + diffPos);
+            assertFalse(oldCol + " does not appear in " + diffPos, secret.get(diffPos).equals(oldCol));
+            store.impose(new Not(new XeqC(v[diffPos], oldCol)));
+
+            System.out.println(newCol + " does not appear in " + diffPos);
+            assertFalse(newCol + " does not appear in " + diffPos, secret.get(diffPos).equals(newCol));
+            store.impose(new Not(new XeqC(v[diffPos], newCol)));
+
             if (rd == 0) {
                 System.out.println("EITHER " + oldCol + " and " + newCol + " don't appear anywhere OR " + oldCol + " and " + newCol + " both appear in pos " + diffPosNeg);
-                // TODO: construct constraints
+                store.impose(new Or(doNotAppearAnywhere(v, oldCol, newCol), bothAppearIn(v, oldCol, newCol, diffPosNeg)));
+                // TODO: is this condition a pointer to try another mutation at this position? <- good idea
             } else if (rd == 1) {
                 System.out.println(newCol + " appears in pos " + diffPosNeg);
                 assertTrue(newCol + " appears in pos " + diffPosNeg, appearsIn(secret, newCol, diffPosNeg));
                 store.impose(appearsInConstraint(v, newCol, diffPosNeg));
 
-                System.out.println(newCol + " does not appear in " + diffPos);
-                assertFalse(newCol + " does not appear in " + diffPos, secret.get(diffPos).equals(newCol));
-                store.impose(new Not(new XeqC(v[diffPos], newCol)));
             } else if (rd == -1) {
                 System.out.println(oldCol + " appears in pos " + diffPosNeg);
                 assertTrue(oldCol + " appears in pos " + diffPosNeg, appearsIn(secret, oldCol, diffPosNeg));
                 store.impose(appearsInConstraint(v, oldCol, diffPosNeg));
 
-                System.out.println(oldCol + " does not appear in " + diffPos);
-                assertFalse(oldCol + " does not appear in " + diffPos, secret.get(diffPos).equals(oldCol));
-                store.impose(new Not(new XeqC(v[diffPos], oldCol)));
             }
         } else if (wd == 1) {
             System.out.println(newCol + " appears in pos " + diffPos);
@@ -170,6 +173,23 @@ public class TestScores {
             constraints.add(new XeqC(v[i], colour));
         }
         return new Or(constraints);
+    }
+
+    static PrimitiveConstraint doNotAppearAnywhere(IntVar[] v, int col1, int col2) {
+        ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
+        constraints.add(new Not(new XeqC(v[0], col1)));
+        constraints.add(new Not(new XeqC(v[1], col1)));
+        constraints.add(new Not(new XeqC(v[2], col1)));
+        constraints.add(new Not(new XeqC(v[3], col1)));
+        constraints.add(new Not(new XeqC(v[0], col2)));
+        constraints.add(new Not(new XeqC(v[1], col2)));
+        constraints.add(new Not(new XeqC(v[2], col2)));
+        constraints.add(new Not(new XeqC(v[3], col2)));
+        return new And(constraints);
+    }
+
+    static PrimitiveConstraint bothAppearIn(IntVar[] v, int col1, int col2, Set<Integer> positions) {
+        return new And(appearsInConstraint(v, col1, positions), appearsInConstraint(v, col2, positions));
     }
 
 }
