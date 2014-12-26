@@ -206,4 +206,5 @@ public class Scores {
         return new ScoreDelta(score2.count(WHITE) - score1.count(WHITE), score2.count(RED) - score1.count(RED));
     }
 
+
 }
