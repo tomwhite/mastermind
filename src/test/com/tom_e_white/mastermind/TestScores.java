@@ -45,6 +45,7 @@ public class TestScores {
                     for (int l = 0; l < 6; l++) {
                         List<Integer> secret = move(i, j, k, l);
                         reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 1, 2, 4), 3);
+                        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 1, 5, 3), 2);
                     }
                 }
             }
@@ -61,15 +62,17 @@ public class TestScores {
         System.out.println(move2);
         int rd = scoreDelta.getRedDelta();
         int wd = scoreDelta.getWhiteDelta();
-        int oldCol = move1.get(3);
-        int newCol = move2.get(3);
+        int oldCol = move1.get(diffPos);
+        int newCol = move2.get(diffPos);
         if (wd == 0) {
             if (rd == 0) {
                 System.out.println("EITHER " + oldCol + " and " + newCol + " don't appear anywhere OR " + oldCol + " and " + newCol + " both appear in pos " + diffPosNeg);
             } else if (rd == 1) {
                 System.out.println(newCol + " appears in pos " + diffPosNeg);
+                assertTrue(newCol + " appears in pos " + diffPosNeg, appearsIn(secret, newCol, diffPosNeg));
             } else if (rd == -1) {
                 System.out.println(oldCol + " appears in pos " + diffPosNeg);
+                assertTrue(oldCol + " appears in pos " + diffPosNeg, appearsIn(secret, oldCol, diffPosNeg));
             }
         } else if (wd == 1) {
             System.out.println(newCol + " appears in pos " + diffPos);
@@ -79,21 +82,27 @@ public class TestScores {
                 assertFalse(oldCol + " does not appear anywhere", secret.contains(oldCol));
             } else if (rd == -1) {
                 System.out.println(oldCol + " appears in pos " + diffPosNeg);
-                boolean contains = false;
-                for (int i : diffPosNeg) {
-                    contains = contains || secret.get(i).equals(oldCol);
-                }
-                assertTrue(oldCol + " appears in pos " + diffPosNeg, contains);
+                assertTrue(oldCol + " appears in pos " + diffPosNeg, appearsIn(secret, oldCol, diffPosNeg));
             }
         } else if (wd == -1) {
+            System.out.println(oldCol + " appears in pos " + diffPos);
+            assertEquals(oldCol + " appears in pos " + diffPos, (long) secret.get(diffPos), oldCol);
             if (rd == 0) {
-                System.out.println(oldCol + " appears in pos " + diffPos);
                 System.out.println(newCol + " does not appear anywhere");
+                assertFalse(newCol + " does not appear anywhere", secret.contains(newCol));
             } else if (rd == 1) {
-                System.out.println(oldCol + " appears in pos" + diffPos);
                 System.out.println(newCol + " appears in pos " + diffPosNeg);
+                assertTrue(newCol + " appears in pos " + diffPosNeg, appearsIn(secret, newCol, diffPosNeg));
             }
         }
         System.out.println();
+    }
+
+    static boolean appearsIn(List<Integer> secret, int colour, Set<Integer> positions) {
+        boolean contains = false;
+        for (int i : positions) {
+            contains = contains || secret.get(i).equals(colour);
+        }
+        return contains;
     }
 }
