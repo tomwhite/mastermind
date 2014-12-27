@@ -141,10 +141,7 @@ public class TestScores {
             doesNotAppearIn(oldCol, diffPos);
             doesNotAppearIn(newCol, diffPos);
             if (rd == 0) {
-//                eitherDontAppearAnywhereOrBothAppearIn(oldCol, newCol, diffPosNeg);
-                System.out.println("EITHER " + oldCol + " and " + newCol + " don't appear anywhere OR " + oldCol + " and " + newCol + " both appear in pos " + diffPosNeg);
-                store.impose(new Or(doNotAppearAnywhere(oldCol, newCol), bothAppearIn(oldCol, newCol, diffPosNeg)));
-                // TODO: is this condition a pointer to try another mutation at this position? <- good idea
+                eitherDontAppearAnywhereOrBothAppearIn(oldCol, newCol, diffPosNeg);
             } else if (rd == 1) {
                 appearsIn(newCol, diffPosNeg);
             } else if (rd == -1) {
@@ -209,6 +206,25 @@ public class TestScores {
         System.out.println("TODO: no need to try " + colour + " again");
     }
 
+    void eitherDontAppearAnywhereOrBothAppearIn(int col1, int col2, Set<Integer> positions) {
+        System.out.println("EITHER " + col1 + " and " + col2 + " don't appear anywhere OR " + col1 + " and " + col2 + " both appear in pos " + positions);
+
+        ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
+        constraints.add(new Not(new XeqC(v[0], col1)));
+        constraints.add(new Not(new XeqC(v[1], col1)));
+        constraints.add(new Not(new XeqC(v[2], col1)));
+        constraints.add(new Not(new XeqC(v[3], col1)));
+        constraints.add(new Not(new XeqC(v[0], col2)));
+        constraints.add(new Not(new XeqC(v[1], col2)));
+        constraints.add(new Not(new XeqC(v[2], col2)));
+        constraints.add(new Not(new XeqC(v[3], col2)));
+
+        store.impose(new Or(new And(constraints),
+                new And(appearsInConstraint(col1, positions), appearsInConstraint(col2, positions))));
+    }
+
+    ////
+
     PrimitiveConstraint appearsInConstraint(int colour, Set<Integer> positions) {
         ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
         for (int i : positions) {
@@ -224,22 +240,4 @@ public class TestScores {
         }
         return new Or(constraints);
     }
-
-    PrimitiveConstraint doNotAppearAnywhere(int col1, int col2) {
-        ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
-        constraints.add(new Not(new XeqC(v[0], col1)));
-        constraints.add(new Not(new XeqC(v[1], col1)));
-        constraints.add(new Not(new XeqC(v[2], col1)));
-        constraints.add(new Not(new XeqC(v[3], col1)));
-        constraints.add(new Not(new XeqC(v[0], col2)));
-        constraints.add(new Not(new XeqC(v[1], col2)));
-        constraints.add(new Not(new XeqC(v[2], col2)));
-        constraints.add(new Not(new XeqC(v[3], col2)));
-        return new And(constraints);
-    }
-
-    PrimitiveConstraint bothAppearIn(int col1, int col2, Set<Integer> positions) {
-        return new And(appearsInConstraint(col1, positions), appearsInConstraint(col2, positions));
-    }
-
 }
