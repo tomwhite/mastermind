@@ -138,13 +138,8 @@ public class TestScores {
         int oldCol = move1.get(diffPos);
         int newCol = move2.get(diffPos);
         if (wd == 0) {
-            System.out.println(oldCol + " does not appear in " + diffPos);
-            assertFalse(oldCol + " does not appear in " + diffPos, secret.get(diffPos).equals(oldCol));
-            store.impose(new Not(new XeqC(v[diffPos], oldCol)));
-
-            System.out.println(newCol + " does not appear in " + diffPos);
-            assertFalse(newCol + " does not appear in " + diffPos, secret.get(diffPos).equals(newCol));
-            store.impose(new Not(new XeqC(v[diffPos], newCol)));
+            doesNotAppearIn(oldCol, diffPos);
+            doesNotAppearIn(newCol, diffPos);
 
             if (rd == 0) {
                 System.out.println("EITHER " + oldCol + " and " + newCol + " don't appear anywhere OR " + oldCol + " and " + newCol + " both appear in pos " + diffPosNeg);
@@ -176,9 +171,7 @@ public class TestScores {
                 assertTrue(oldCol + " appears in pos " + diffPosNeg, appearsIn(oldCol, diffPosNeg));
                 store.impose(appearsInConstraint(oldCol, diffPosNeg));
 
-                System.out.println(oldCol + " does not appear in " + diffPos);
-                assertFalse(oldCol + " does not appear in " + diffPos, secret.get(diffPos).equals(oldCol));
-                store.impose(new Not(new XeqC(v[diffPos], oldCol)));
+                doesNotAppearIn(oldCol, diffPos);
             }
         } else if (wd == -1) {
             appearsIn(oldCol, diffPos);
@@ -195,9 +188,7 @@ public class TestScores {
                 assertTrue(newCol + " appears in pos " + diffPosNeg, appearsIn(newCol, diffPosNeg));
                 store.impose(appearsInConstraint(newCol, diffPosNeg));
 
-                System.out.println(newCol + " does not appear in " + diffPos);
-                assertFalse(newCol + " does not appear in " + diffPos, secret.get(diffPos).equals(newCol));
-                store.impose(new Not(new XeqC(v[diffPos], newCol)));
+                doesNotAppearIn(newCol, diffPos);
             }
         }
         System.out.println();
@@ -208,6 +199,12 @@ public class TestScores {
         assertEquals(colour + " appears in pos " + pos, (long) secret.get(pos), colour);
         store.impose(new XeqC(v[pos], colour));
         System.out.println("TODO: no need to mutate " + pos + " again");
+    }
+
+    void doesNotAppearIn(int colour, int pos) {
+        System.out.println(colour + " does not appear in " + pos);
+        assertFalse(colour + " does not appear in " + pos, secret.get(pos).equals(colour));
+        store.impose(new Not(new XeqC(v[pos], colour)));
     }
 
     boolean appearsIn(int colour, Set<Integer> positions) {
