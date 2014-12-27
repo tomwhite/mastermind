@@ -162,10 +162,7 @@ public class TestScores {
                 System.out.println("TODO: we know " + oldCol + " appears so try it again");
             }
         } else if (wd == 1) {
-            System.out.println(newCol + " appears in pos " + diffPos);
-            assertEquals(newCol + " appears in pos " + diffPos, (long) secret.get(diffPos), newCol);
-            store.impose(new XeqC(v[diffPos], newCol));
-            System.out.println("TODO: no need to mutate " + diffPos + " again");
+            appearsIn(newCol, diffPos);
             if (rd == 0) {
                 System.out.println(oldCol + " does not appear anywhere");
                 assertFalse(oldCol + " does not appear anywhere", secret.contains(oldCol));
@@ -184,10 +181,7 @@ public class TestScores {
                 store.impose(new Not(new XeqC(v[diffPos], oldCol)));
             }
         } else if (wd == -1) {
-            System.out.println(oldCol + " appears in pos " + diffPos);
-            assertEquals(oldCol + " appears in pos " + diffPos, (long) secret.get(diffPos), oldCol);
-            store.impose(new XeqC(v[diffPos], oldCol));
-            System.out.println("TODO: no need to mutate " + diffPos + " again");
+            appearsIn(oldCol, diffPos);
             if (rd == 0) {
                 System.out.println(newCol + " does not appear anywhere");
                 assertFalse(newCol + " does not appear anywhere", secret.contains(newCol));
@@ -207,6 +201,13 @@ public class TestScores {
             }
         }
         System.out.println();
+    }
+
+    void appearsIn(int colour, int pos) {
+        System.out.println(colour + " appears in pos " + pos);
+        assertEquals(colour + " appears in pos " + pos, (long) secret.get(pos), colour);
+        store.impose(new XeqC(v[pos], colour));
+        System.out.println("TODO: no need to mutate " + pos + " again");
     }
 
     boolean appearsIn(int colour, Set<Integer> positions) {
