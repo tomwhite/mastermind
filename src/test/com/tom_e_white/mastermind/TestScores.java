@@ -85,6 +85,10 @@ public class TestScores {
         reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 4, 2, 3), 1);
         reportScoreDeltaFor(move(0, 1, 2, 3), move(5, 1, 2, 3), 0);
 
+        // at this point, stop and look at how far we've got
+        // if #soln <=3 then just go through them
+        // o/w find 2 solns that are diff=1 apart and run algorithm again
+
 //        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 1, 2, 5), 3);
 //        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 1, 4, 3), 2);
 //        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 5, 2, 3), 1);
@@ -101,11 +105,10 @@ public class TestScores {
 
         boolean result = search.labeling(store, select);
 
-        //search.printAllSolutions();
-
         int numberOfSolutions = search.getSolutionListener().solutionsNo();
-        if (numberOfSolutions == 14) {
+        if (numberOfSolutions == 5) {
             System.out.println("Alert: " + secret);
+            search.printAllSolutions();
         }
         return numberOfSolutions;
 
