@@ -124,9 +124,18 @@ public class TestScores {
         int wc = score2.count(WHITE);
 
         if (wc == 0 && rc == 0) {
-            // TODO: colours don't appear anywhere
+            doesNotAppearAnywhere(move2.get(0));
+            doesNotAppearAnywhere(move2.get(1));
+            doesNotAppearAnywhere(move2.get(2));
+            doesNotAppearAnywhere(move2.get(3));
         } else if (wc == 1 && rc == 0) {
             store.impose(appearsInConstraint(move2, allPos));
+        } else if (wc == 0 && rc == 1) {
+            // Or
+            // col at 0 appears in 1 2 or 3
+            // col at 1 appears in 0 2 or 3
+            // col at 2 appears in 0 1 or 3
+            // col at 3 appears in 0 1 or 2
         }
 
         Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
