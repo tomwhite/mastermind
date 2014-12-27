@@ -85,10 +85,9 @@ public class TestScores {
         reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 4, 2, 3), 1);
         reportScoreDeltaFor(move(0, 1, 2, 3), move(5, 1, 2, 3), 0);
 
-//        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 1, 2, 5), 3, store, v);
-//        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 1, 4, 3), 2, store, v);
-//        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 5, 2, 3), 1, store, v);
-
+//        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 1, 2, 5), 3);
+//        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 1, 4, 3), 2);
+//        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 5, 2, 3), 1);
 
         Search<IntVar> search = new DepthFirstSearch<IntVar>();
         SelectChoicePoint<IntVar> select =
@@ -130,12 +129,22 @@ public class TestScores {
             doesNotAppearAnywhere(move2.get(3));
         } else if (wc == 1 && rc == 0) {
             store.impose(appearsInConstraint(move2, allPos));
+        } else if (wc == 2 && rc == 0) {
+            ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
+            constraints.add(appearsInBothConstraint(move2.get(0), 0, move2.get(1), 1));
+            constraints.add(appearsInBothConstraint(move2.get(0), 0, move2.get(2), 2));
+            constraints.add(appearsInBothConstraint(move2.get(0), 0, move2.get(3), 3));
+            constraints.add(appearsInBothConstraint(move2.get(1), 1, move2.get(2), 2));
+            constraints.add(appearsInBothConstraint(move2.get(1), 1, move2.get(3), 3));
+            constraints.add(appearsInBothConstraint(move2.get(2), 2, move2.get(3), 3));
+            store.impose(new Or(constraints));
         } else if (wc == 0 && rc == 1) {
-            // Or
-            // col at 0 appears in 1 2 or 3
-            // col at 1 appears in 0 2 or 3
-            // col at 2 appears in 0 1 or 3
-            // col at 3 appears in 0 1 or 2
+            ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
+            constraints.add(appearsInConstraint(move2.get(0), Sets.newHashSet(1, 2, 3)));
+            constraints.add(appearsInConstraint(move2.get(1), Sets.newHashSet(0, 2, 3)));
+            constraints.add(appearsInConstraint(move2.get(2), Sets.newHashSet(0, 1, 3)));
+            constraints.add(appearsInConstraint(move2.get(3), Sets.newHashSet(0, 1, 2)));
+            store.impose(new Or(constraints));
         }
 
         Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
@@ -249,4 +258,12 @@ public class TestScores {
         }
         return new Or(constraints);
     }
+
+    PrimitiveConstraint appearsInBothConstraint(int col1, int pos1, int col2, int pos2) {
+        ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
+        constraints.add(new XeqC(v[pos1], col1));
+        constraints.add(new XeqC(v[pos2], col2));
+        return new And(constraints);
+    }
+
 }
