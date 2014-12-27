@@ -41,6 +41,23 @@ public class TestScores {
 
     @Test
     public void testScoreDeltaFor() {
+        Multiset<Integer> hist = HashMultiset.create();
+        for (int i = 0; i < 6; i++) {
+            for (int j = 0; j < 6; j++) {
+                for (int k = 0; k < 6; k++) {
+                    for (int l = 0; l < 6; l++) {
+                        List<Integer> secret = move(i, j, k, l);
+                        hist.add(playGame(secret));
+                    }
+                }
+            }
+        }
+        System.out.println(Multisets.copyHighestCountFirst(hist));
+    }
+
+    public static int playGame(List<Integer> secret) {
+        System.out.println("New Game");
+
         Store store = new Store();
         int size = 4;
         IntVar[] v = new IntVar[size];
@@ -48,22 +65,18 @@ public class TestScores {
             v[i] = new IntVar(store, "v" + i, 0, 5);
         }
 
-//        for (int i = 0; i < 6; i++) {
-//            for (int j = 0; j < 6; j++) {
-//                for (int k = 0; k < 6; k++) {
-//                    for (int l = 0; l < 6; l++) {
-//                        List<Integer> secret = move(i, j, k, l);
-        List<Integer> secret = Scores.randomMove();
         // TODO: don't just go one step from 0123 - how to improve walk through?
         // TODO: choose colours to change based on how much info they gave in earlier mutations?
-                        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 1, 2, 4), 3, store, v);
-                        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 1, 5, 3), 2, store, v);
-                        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 4, 2, 3), 1, store, v);
-                        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(5, 1, 2, 3), 0, store, v);
-//                    }
-//                }
-//            }
-//        }
+        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 1, 2, 4), 3, store, v);
+        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 1, 5, 3), 2, store, v);
+        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 4, 2, 3), 1, store, v);
+        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(5, 1, 2, 3), 0, store, v);
+
+        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 1, 2, 5), 3, store, v);
+        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 1, 4, 3), 2, store, v);
+        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 5, 2, 3), 1, store, v);
+
+
         Search<IntVar> search = new DepthFirstSearch<IntVar>();
         SelectChoicePoint<IntVar> select =
                 new InputOrderSelect<IntVar>(store, v,
@@ -71,11 +84,17 @@ public class TestScores {
 
         search.getSolutionListener().searchAll(true);
         search.getSolutionListener().recordSolutions(true);
+        search.setPrintInfo(false);
 
         boolean result = search.labeling(store, select);
 
-        System.out.println(search.getSolutionListener().solutionsNo());
-        search.printAllSolutions();
+        //search.printAllSolutions();
+
+        int numberOfSolutions = search.getSolutionListener().solutionsNo();
+        if (numberOfSolutions == 14) {
+            System.out.println("Alert: " + secret);
+        }
+        return numberOfSolutions;
 
     }
 
