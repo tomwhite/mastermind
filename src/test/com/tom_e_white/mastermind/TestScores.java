@@ -146,15 +146,9 @@ public class TestScores {
                 store.impose(new Or(doNotAppearAnywhere(oldCol, newCol), bothAppearIn(oldCol, newCol, diffPosNeg)));
                 // TODO: is this condition a pointer to try another mutation at this position? <- good idea
             } else if (rd == 1) {
-                System.out.println(newCol + " appears in pos " + diffPosNeg);
-                assertTrue(newCol + " appears in pos " + diffPosNeg, appearsIn(newCol, diffPosNeg));
-                store.impose(appearsInConstraint(newCol, diffPosNeg));
-                System.out.println("TODO: we know " + newCol + " appears so try it again (in one of diffPosNeg)");
+                appearsIn(newCol, diffPosNeg);
             } else if (rd == -1) {
-                System.out.println(oldCol + " appears in pos " + diffPosNeg);
-                assertTrue(oldCol + " appears in pos " + diffPosNeg, appearsIn(oldCol, diffPosNeg));
-                store.impose(appearsInConstraint(oldCol, diffPosNeg));
-                System.out.println("TODO: we know " + oldCol + " appears so try it again");
+                appearsIn(oldCol, diffPosNeg);
             }
         } else if (wd == 1) {
             appearsIn(newCol, diffPos);
@@ -167,10 +161,7 @@ public class TestScores {
                 store.impose(new Not(new XeqC(v[3], oldCol)));
                 System.out.println("TODO: no need to try " + oldCol + " again");
             } else if (rd == -1) {
-                System.out.println(oldCol + " appears in pos " + diffPosNeg);
-                assertTrue(oldCol + " appears in pos " + diffPosNeg, appearsIn(oldCol, diffPosNeg));
-                store.impose(appearsInConstraint(oldCol, diffPosNeg));
-
+                appearsIn(oldCol, diffPosNeg);
                 doesNotAppearIn(oldCol, diffPos);
             }
         } else if (wd == -1) {
@@ -184,10 +175,7 @@ public class TestScores {
                 store.impose(new Not(new XeqC(v[3], newCol)));
                 System.out.println("TODO: no need to try " + newCol + " again");
             } else if (rd == 1) {
-                System.out.println(newCol + " appears in pos " + diffPosNeg);
-                assertTrue(newCol + " appears in pos " + diffPosNeg, appearsIn(newCol, diffPosNeg));
-                store.impose(appearsInConstraint(newCol, diffPosNeg));
-
+                appearsIn(newCol, diffPosNeg);
                 doesNotAppearIn(newCol, diffPos);
             }
         }
@@ -208,10 +196,18 @@ public class TestScores {
     }
 
     boolean appearsIn(int colour, Set<Integer> positions) {
+        System.out.println(colour + " appears in one of pos " + positions);
+        store.impose(appearsInConstraint(colour, positions));
+        System.out.println("TODO: we know " + colour + " appears so try it again (in one of " + positions + ")");
+
         boolean contains = false;
+        ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
         for (int i : positions) {
+            constraints.add(new XeqC(v[i], colour));
             contains = contains || secret.get(i).equals(colour);
         }
+        store.impose(new Or(constraints));
+        assertTrue(colour + " appears in one of pos " + positions, contains);
         return contains;
     }
 
