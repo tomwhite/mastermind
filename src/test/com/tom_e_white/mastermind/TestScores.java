@@ -25,6 +25,8 @@ public class TestScores {
     private Store store;
     private IntVar[] v;
 
+    private List<List<Integer>> moves = Lists.newArrayList();
+
     @Test
     public void test() {
         assertEquals(ImmutableMultiset.of(WHITE, WHITE, WHITE, WHITE),
@@ -80,10 +82,17 @@ public class TestScores {
 
         // TODO: don't just go one step from 0123 - how to improve walk through?
         // TODO: choose colours to change based on how much info they gave in earlier mutations?
-        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 1, 2, 4), 3);
-        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 1, 5, 3), 2);
-        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 4, 2, 3), 1);
-        reportScoreDeltaFor(move(0, 1, 2, 3), move(5, 1, 2, 3), 0);
+        // TODO: or use constraints in order to guide next move somehow?
+        makeMove(move(0, 1, 2, 3));
+        makeMove(move(0, 1, 2, 4));
+        makeMove(move(0, 1, 5, 4));
+        makeMove(move(0, 3, 5, 4));
+        makeMove(move(2, 3, 5, 4));
+
+//        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 1, 2, 4), 3);
+//        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 1, 5, 3), 2);
+//        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 4, 2, 3), 1);
+//        reportScoreDeltaFor(move(0, 1, 2, 3), move(5, 1, 2, 3), 0);
 
         // at this point, stop and look at how far we've got
         // if #soln <=3 then just go through them
@@ -114,54 +123,85 @@ public class TestScores {
 
     }
 
-    public void reportScoreDeltaFor(List<Integer> move1, List<Integer> move2, int diffPos) {
+    public void makeMove(List<Integer> move) {
+        moves.add(move);
+
         Set<Integer> allPos = Sets.newTreeSet(Sets.newHashSet(0, 1, 2, 3));
 
+        Multiset<Scores.Score> score = Scores.score(secret, move);
+
+        int rc = score.count(RED);
+        int wc = score.count(WHITE);
+
+        if (wc == 0 && rc == 0) {
+            doesNotAppearAnywhere(move.get(0));
+            doesNotAppearAnywhere(move.get(1));
+            doesNotAppearAnywhere(move.get(2));
+            doesNotAppearAnywhere(move.get(3));
+        } else if (wc == 1 && rc == 0) {
+            store.impose(appearsInConstraint(move, allPos));
+        } else if (wc == 2 && rc == 0) {
+            ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
+            constraints.add(appearsInBothConstraint(move.get(0), 0, move.get(1), 1));
+            constraints.add(appearsInBothConstraint(move.get(0), 0, move.get(2), 2));
+            constraints.add(appearsInBothConstraint(move.get(0), 0, move.get(3), 3));
+            constraints.add(appearsInBothConstraint(move.get(1), 1, move.get(2), 2));
+            constraints.add(appearsInBothConstraint(move.get(1), 1, move.get(3), 3));
+            constraints.add(appearsInBothConstraint(move.get(2), 2, move.get(3), 3));
+            store.impose(new Or(constraints));
+        } else if (wc == 0 && rc == 1) {
+            ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
+            constraints.add(appearsInConstraint(move.get(0), Sets.newHashSet(1, 2, 3)));
+            constraints.add(appearsInConstraint(move.get(1), Sets.newHashSet(0, 2, 3)));
+            constraints.add(appearsInConstraint(move.get(2), Sets.newHashSet(0, 1, 3)));
+            constraints.add(appearsInConstraint(move.get(3), Sets.newHashSet(0, 1, 2)));
+            store.impose(new Or(constraints));
+        } else if (wc == 4) {
+            appearsIn(move.get(0), 0);
+            appearsIn(move.get(1), 1);
+            appearsIn(move.get(2), 2);
+            appearsIn(move.get(3), 3);
+        }
+
+        if (wc == 0) {
+            doesNotAppearIn(move.get(0), 0);
+            doesNotAppearIn(move.get(1), 1);
+            doesNotAppearIn(move.get(2), 2);
+            doesNotAppearIn(move.get(3), 3);
+        }
+
+        if (moves.size() <= 1) {
+            return;
+        }
+
+        List<Integer> previousMove = moves.get(moves.size() - 2);
+        int diffPos = diff(previousMove, move);
+        if (diffPos == -1) {
+            return;
+        }
+        reportScoreDeltaFor(previousMove, move, diffPos);
+    }
+
+    private int diff(List<Integer> move1, List<Integer> move2) {
+        int diffPos = -1;
+        for (int i = 0; i < 4; i++) {
+            if (move1.get(i) != move2.get(i)) {
+                if (diffPos == -1) {
+                    diffPos = i;
+                } else {
+                    return -1; // more than one diff
+                }
+            }
+        }
+        return diffPos;
+    }
+
+    public void reportScoreDeltaFor(List<Integer> move1, List<Integer> move2, int diffPos) {
         Set<Integer> diffPosNeg = Sets.newTreeSet(Sets.newHashSet(0, 1, 2, 3));
         diffPosNeg.remove(diffPos);
 
         Multiset<Scores.Score> score1 = Scores.score(secret, move1);
         Multiset<Scores.Score> score2 = Scores.score(secret, move2);
-
-        int rc = score2.count(RED);
-        int wc = score2.count(WHITE);
-
-        if (wc == 0 && rc == 0) {
-            doesNotAppearAnywhere(move2.get(0));
-            doesNotAppearAnywhere(move2.get(1));
-            doesNotAppearAnywhere(move2.get(2));
-            doesNotAppearAnywhere(move2.get(3));
-        } else if (wc == 1 && rc == 0) {
-            store.impose(appearsInConstraint(move2, allPos));
-        } else if (wc == 2 && rc == 0) {
-            ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
-            constraints.add(appearsInBothConstraint(move2.get(0), 0, move2.get(1), 1));
-            constraints.add(appearsInBothConstraint(move2.get(0), 0, move2.get(2), 2));
-            constraints.add(appearsInBothConstraint(move2.get(0), 0, move2.get(3), 3));
-            constraints.add(appearsInBothConstraint(move2.get(1), 1, move2.get(2), 2));
-            constraints.add(appearsInBothConstraint(move2.get(1), 1, move2.get(3), 3));
-            constraints.add(appearsInBothConstraint(move2.get(2), 2, move2.get(3), 3));
-            store.impose(new Or(constraints));
-        } else if (wc == 0 && rc == 1) {
-            ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
-            constraints.add(appearsInConstraint(move2.get(0), Sets.newHashSet(1, 2, 3)));
-            constraints.add(appearsInConstraint(move2.get(1), Sets.newHashSet(0, 2, 3)));
-            constraints.add(appearsInConstraint(move2.get(2), Sets.newHashSet(0, 1, 3)));
-            constraints.add(appearsInConstraint(move2.get(3), Sets.newHashSet(0, 1, 2)));
-            store.impose(new Or(constraints));
-        } else if (wc == 4) {
-            appearsIn(move2.get(0), 0);
-            appearsIn(move2.get(1), 1);
-            appearsIn(move2.get(2), 2);
-            appearsIn(move2.get(3), 3);
-        }
-
-        if (wc == 0) {
-            doesNotAppearIn(move2.get(0), 0);
-            doesNotAppearIn(move2.get(1), 1);
-            doesNotAppearIn(move2.get(2), 2);
-            doesNotAppearIn(move2.get(3), 3);
-        }
 
         Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
         System.out.println(secret);
