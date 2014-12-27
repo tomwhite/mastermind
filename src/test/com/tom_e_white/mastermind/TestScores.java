@@ -65,6 +65,16 @@ public class TestScores {
             v[i] = new IntVar(store, "v" + i, 0, 5);
         }
 
+        // Keep a list of mutations to try
+        // If a position is found then remove all the mutations from that position
+        // If a new colour is found to be tried, then add it at the front of the list for that position
+        List<List<Integer>> mutations = Lists.newArrayList(
+                (List<Integer>) Lists.newArrayList(4, 1),
+                Lists.newArrayList(5, 2),
+                Lists.newArrayList(4, 3),
+                Lists.newArrayList(5, 0)
+        );
+
         // TODO: don't just go one step from 0123 - how to improve walk through?
         // TODO: choose colours to change based on how much info they gave in earlier mutations?
         reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 1, 2, 4), 3, store, v);
@@ -72,9 +82,9 @@ public class TestScores {
         reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 4, 2, 3), 1, store, v);
         reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(5, 1, 2, 3), 0, store, v);
 
-        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 1, 2, 5), 3, store, v);
-        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 1, 4, 3), 2, store, v);
-        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 5, 2, 3), 1, store, v);
+//        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 1, 2, 5), 3, store, v);
+//        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 1, 4, 3), 2, store, v);
+//        reportScoreDeltaFor(secret, move(0, 1, 2, 3), move(0, 5, 2, 3), 1, store, v);
 
 
         Search<IntVar> search = new DepthFirstSearch<IntVar>();
@@ -99,13 +109,27 @@ public class TestScores {
     }
 
     public static void reportScoreDeltaFor(List<Integer> secret, List<Integer> move1, List<Integer> move2, int diffPos, Store store, IntVar[] v) {
+        Set<Integer> allPos = Sets.newTreeSet(Sets.newHashSet(0, 1, 2, 3));
+
         Set<Integer> diffPosNeg = Sets.newTreeSet(Sets.newHashSet(0, 1, 2, 3));
         diffPosNeg.remove(diffPos);
 
-        Scores.ScoreDelta scoreDelta = Scores.scoreDelta(Scores.score(secret, move1), Scores.score(secret, move2));
+        Multiset<Scores.Score> score1 = Scores.score(secret, move1);
+        Multiset<Scores.Score> score2 = Scores.score(secret, move2);
+
+        int rc = score2.count(RED);
+        int wc = score2.count(WHITE);
+
+        if (wc == 0 && rc == 0) {
+            // TODO: colours don't appear anywhere
+        } else if (wc == 1 && rc == 0) {
+            store.impose(appearsInConstraint(v, move2, allPos));
+        }
+
+        Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
         System.out.println(secret);
-        System.out.println(move1);
-        System.out.println(move2);
+        System.out.println(move1 + "; " + score1);
+        System.out.println(move2 + "; " + score2);
         int rd = scoreDelta.getRedDelta();
         int wd = scoreDelta.getWhiteDelta();
         int oldCol = move1.get(diffPos);
@@ -127,17 +151,18 @@ public class TestScores {
                 System.out.println(newCol + " appears in pos " + diffPosNeg);
                 assertTrue(newCol + " appears in pos " + diffPosNeg, appearsIn(secret, newCol, diffPosNeg));
                 store.impose(appearsInConstraint(v, newCol, diffPosNeg));
-
+                System.out.println("TODO: we know " + newCol + " appears so try it again (in one of diffPosNeg)");
             } else if (rd == -1) {
                 System.out.println(oldCol + " appears in pos " + diffPosNeg);
                 assertTrue(oldCol + " appears in pos " + diffPosNeg, appearsIn(secret, oldCol, diffPosNeg));
                 store.impose(appearsInConstraint(v, oldCol, diffPosNeg));
-
+                System.out.println("TODO: we know " + oldCol + " appears so try it again");
             }
         } else if (wd == 1) {
             System.out.println(newCol + " appears in pos " + diffPos);
             assertEquals(newCol + " appears in pos " + diffPos, (long) secret.get(diffPos), newCol);
             store.impose(new XeqC(v[diffPos], newCol));
+            System.out.println("TODO: no need to mutate " + diffPos + " again");
             if (rd == 0) {
                 System.out.println(oldCol + " does not appear anywhere");
                 assertFalse(oldCol + " does not appear anywhere", secret.contains(oldCol));
@@ -145,6 +170,7 @@ public class TestScores {
                 store.impose(new Not(new XeqC(v[1], oldCol)));
                 store.impose(new Not(new XeqC(v[2], oldCol)));
                 store.impose(new Not(new XeqC(v[3], oldCol)));
+                System.out.println("TODO: no need to try " + oldCol + " again");
             } else if (rd == -1) {
                 System.out.println(oldCol + " appears in pos " + diffPosNeg);
                 assertTrue(oldCol + " appears in pos " + diffPosNeg, appearsIn(secret, oldCol, diffPosNeg));
@@ -158,6 +184,7 @@ public class TestScores {
             System.out.println(oldCol + " appears in pos " + diffPos);
             assertEquals(oldCol + " appears in pos " + diffPos, (long) secret.get(diffPos), oldCol);
             store.impose(new XeqC(v[diffPos], oldCol));
+            System.out.println("TODO: no need to mutate " + diffPos + " again");
             if (rd == 0) {
                 System.out.println(newCol + " does not appear anywhere");
                 assertFalse(newCol + " does not appear anywhere", secret.contains(newCol));
@@ -165,6 +192,7 @@ public class TestScores {
                 store.impose(new Not(new XeqC(v[1], newCol)));
                 store.impose(new Not(new XeqC(v[2], newCol)));
                 store.impose(new Not(new XeqC(v[3], newCol)));
+                System.out.println("TODO: no need to try " + newCol + " again");
             } else if (rd == 1) {
                 System.out.println(newCol + " appears in pos " + diffPosNeg);
                 assertTrue(newCol + " appears in pos " + diffPosNeg, appearsIn(secret, newCol, diffPosNeg));
@@ -190,6 +218,14 @@ public class TestScores {
         ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
         for (int i : positions) {
             constraints.add(new XeqC(v[i], colour));
+        }
+        return new Or(constraints);
+    }
+
+    static PrimitiveConstraint appearsInConstraint(IntVar[] v, List<Integer> move, Set<Integer> positions) {
+        ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
+        for (int i : positions) {
+            constraints.add(new XeqC(v[i], move.get(i)));
         }
         return new Or(constraints);
     }
