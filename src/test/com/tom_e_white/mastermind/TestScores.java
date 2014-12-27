@@ -140,8 +140,8 @@ public class TestScores {
         if (wd == 0) {
             doesNotAppearIn(oldCol, diffPos);
             doesNotAppearIn(newCol, diffPos);
-
             if (rd == 0) {
+//                eitherDontAppearAnywhereOrBothAppearIn(oldCol, newCol, diffPosNeg);
                 System.out.println("EITHER " + oldCol + " and " + newCol + " don't appear anywhere OR " + oldCol + " and " + newCol + " both appear in pos " + diffPosNeg);
                 store.impose(new Or(doNotAppearAnywhere(oldCol, newCol), bothAppearIn(oldCol, newCol, diffPosNeg)));
                 // TODO: is this condition a pointer to try another mutation at this position? <- good idea
@@ -153,13 +153,7 @@ public class TestScores {
         } else if (wd == 1) {
             appearsIn(newCol, diffPos);
             if (rd == 0) {
-                System.out.println(oldCol + " does not appear anywhere");
-                assertFalse(oldCol + " does not appear anywhere", secret.contains(oldCol));
-                store.impose(new Not(new XeqC(v[0], oldCol)));
-                store.impose(new Not(new XeqC(v[1], oldCol)));
-                store.impose(new Not(new XeqC(v[2], oldCol)));
-                store.impose(new Not(new XeqC(v[3], oldCol)));
-                System.out.println("TODO: no need to try " + oldCol + " again");
+                doesNotAppearAnywhere(oldCol);
             } else if (rd == -1) {
                 appearsIn(oldCol, diffPosNeg);
                 doesNotAppearIn(oldCol, diffPos);
@@ -167,13 +161,7 @@ public class TestScores {
         } else if (wd == -1) {
             appearsIn(oldCol, diffPos);
             if (rd == 0) {
-                System.out.println(newCol + " does not appear anywhere");
-                assertFalse(newCol + " does not appear anywhere", secret.contains(newCol));
-                store.impose(new Not(new XeqC(v[0], newCol)));
-                store.impose(new Not(new XeqC(v[1], newCol)));
-                store.impose(new Not(new XeqC(v[2], newCol)));
-                store.impose(new Not(new XeqC(v[3], newCol)));
-                System.out.println("TODO: no need to try " + newCol + " again");
+                doesNotAppearAnywhere(newCol);
             } else if (rd == 1) {
                 appearsIn(newCol, diffPosNeg);
                 doesNotAppearIn(newCol, diffPos);
@@ -209,6 +197,16 @@ public class TestScores {
         store.impose(new Or(constraints));
         assertTrue(colour + " appears in one of pos " + positions, contains);
         return contains;
+    }
+
+    void doesNotAppearAnywhere(int colour) {
+        System.out.println(colour + " does not appear anywhere");
+        assertFalse(colour + " does not appear anywhere", secret.contains(colour));
+        store.impose(new Not(new XeqC(v[0], colour)));
+        store.impose(new Not(new XeqC(v[1], colour)));
+        store.impose(new Not(new XeqC(v[2], colour)));
+        store.impose(new Not(new XeqC(v[3], colour)));
+        System.out.println("TODO: no need to try " + colour + " again");
     }
 
     PrimitiveConstraint appearsInConstraint(int colour, Set<Integer> positions) {
