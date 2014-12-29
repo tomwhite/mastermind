@@ -193,7 +193,7 @@ public class TestScores {
         if (numberOfSolutions == 0) {
             throw new IllegalStateException("Zero solutions for " + secret);
         }
-        if (numberOfSolutions == 3) {
+        if (numberOfSolutions == 6) {
             reportGame(search);
         }
 //        for (int i = 1; i <= numberOfSolutions; i++) {
@@ -230,7 +230,7 @@ public class TestScores {
             int diffPos = diff(previousMove, move);
             if (diffPos != -1) {
                 reportScoreDeltaFor(previousMove, move, diffPos);
-                break; // TODO: remove this so we can check all moves edit dist 1 away
+                //break; // TODO: remove this so we can check all moves edit dist 1 away
             }
         }
     }
