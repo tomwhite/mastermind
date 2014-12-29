@@ -150,23 +150,52 @@ public class TestScores {
 
         boolean result = search.labeling(store, select);
 
-        List<Integer> solution = Lists.newArrayList();
+        List<Integer> bestSolution = null;
+        int bestWeight = -1;
+
         int numberOfSolutions = search.getSolutionListener().solutionsNo();
         for (int i = 1; i <= numberOfSolutions; i++) {
-            solution.clear();
+            List<Integer> solution = Lists.newArrayList();
             Domain[] sol = search.getSolutionListener().getSolution(i);
             for (int j = 0; j < sol.length; j++) {
                 solution.add(sol[j].valueEnumeration().nextElement()); // convert domain to int
             }
+            int weight = weight(solution);
+            if (bestSolution == null) {
+                bestSolution = solution;
+                bestWeight = weight;
+            }
             if (moves.contains(solution)) {
                 continue;
             }
-            break; // just return first to start with (unless already played it)
+            if (weight > bestWeight) {
+                bestSolution = solution;
+                bestWeight = weight;
+            }
+//            System.out.println("Min dist: " + minDist(solution));
+//            System.out.println("Distinct?: " + hasDistinctColours(solution));
+            //break; // just return first to start with (unless already played it)
         }
-        if (solution.size() != 4) {
-            System.out.println(solution);
+        if (bestSolution.size() != 4) {
+            System.out.println(bestSolution);
         }
-        return solution;
+        return bestSolution;
+    }
+
+    private int minDist(List<Integer> move) {
+        int min = Integer.MAX_VALUE;
+        for (List<Integer> previousMove : moves) {
+            int dist = dist(previousMove, move);
+            if (dist < min) {
+                min = dist;
+            }
+        }
+        return min;
+    }
+
+    private int weight(List<Integer> move) {
+        return //(minDist(move) == 1 ? 1 : 0);// +
+                 (hasDistinctColours(move) ? 1 : 0);
     }
 
     private int countSolutions() {
@@ -273,6 +302,16 @@ public class TestScores {
             }
         }
         return diffPos;
+    }
+
+    private int dist(List<Integer> move1, List<Integer> move2) {
+        int dist = 0;
+        for (int i = 0; i < 4; i++) {
+            if (move1.get(i) != move2.get(i)) {
+                dist++;
+            }
+        }
+        return dist;
     }
 
     private boolean hasDistinctColours(List<Integer> move) {
