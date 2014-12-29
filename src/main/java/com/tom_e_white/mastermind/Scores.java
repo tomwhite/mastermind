@@ -143,7 +143,11 @@ public class Scores {
         double s = 0;
         for (Multiset<Score> set : histogram) {
             for (Score score : set) {
-                s += score == WHITE ? 2 : 1;
+                if (score == WHITE) {
+                    s += 2;
+                } else if (score == RED) {
+                    s += 1;
+                }
             }
         }
         return s / histogram.size();
