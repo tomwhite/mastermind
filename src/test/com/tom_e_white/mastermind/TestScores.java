@@ -190,62 +190,9 @@ public class TestScores {
     public void makeMove(List<Integer> move) {
         moves.add(move);
 
-        Set<Integer> allPos = Sets.newTreeSet(Sets.newHashSet(0, 1, 2, 3));
-
         Multiset<Scores.Score> score = Scores.score(secret, move);
 
-        int rc = score.count(RED);
-        int wc = score.count(WHITE);
-
-        if (wc == 0 && rc == 0) {
-            doesNotAppearAnywhere(move.get(0));
-            doesNotAppearAnywhere(move.get(1));
-            doesNotAppearAnywhere(move.get(2));
-            doesNotAppearAnywhere(move.get(3));
-        } else if (wc == 1 && rc == 0) {
-            store.impose(appearsInConstraint(move, allPos));
-        } else if (wc == 2 && rc == 0) {
-            ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
-            constraints.add(appearsInBothConstraint(move.get(0), 0, move.get(1), 1));
-            constraints.add(appearsInBothConstraint(move.get(0), 0, move.get(2), 2));
-            constraints.add(appearsInBothConstraint(move.get(0), 0, move.get(3), 3));
-            constraints.add(appearsInBothConstraint(move.get(1), 1, move.get(2), 2));
-            constraints.add(appearsInBothConstraint(move.get(1), 1, move.get(3), 3));
-            constraints.add(appearsInBothConstraint(move.get(2), 2, move.get(3), 3));
-            store.impose(new Or(constraints));
-        } else if (wc == 3 && rc == 0) {
-
-        } else if (wc == 4) { // rc == 0
-            appearsIn(move.get(0), 0);
-            appearsIn(move.get(1), 1);
-            appearsIn(move.get(2), 2);
-            appearsIn(move.get(3), 3);
-        } else if (wc == 0 && rc == 1) { // common
-            ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
-            constraints.add(appearsInConstraint(move.get(0), Sets.newHashSet(1, 2, 3)));
-            constraints.add(appearsInConstraint(move.get(1), Sets.newHashSet(0, 2, 3)));
-            constraints.add(appearsInConstraint(move.get(2), Sets.newHashSet(0, 1, 3)));
-            constraints.add(appearsInConstraint(move.get(3), Sets.newHashSet(0, 1, 2)));
-            store.impose(new Or(constraints));
-        } else if (wc == 0 && rc == 2) { // common
-        } else if (wc == 0 && rc == 3) { // common
-        } else if (wc == 0 && rc == 4) {
-
-        } else if (wc == 1 && rc == 1) { // common
-        } else if (wc == 1 && rc == 2) { // common
-        } else if (wc == 1 && rc == 3) {
-
-        } else if (wc == 2 && rc == 1) {
-        } else if (wc == 2 && rc == 2) {
-
-        }
-
-        if (wc == 0) {
-            doesNotAppearIn(move.get(0), 0);
-            doesNotAppearIn(move.get(1), 1);
-            doesNotAppearIn(move.get(2), 2);
-            doesNotAppearIn(move.get(3), 3);
-        }
+        store.impose(scoreConstraint(move, score));
 
         if (moves.size() <= 1) {
             return;
@@ -258,6 +205,47 @@ public class TestScores {
                 break; // TODO: remove this so we can check all moves edit dist 1 away
             }
         }
+    }
+
+    private PrimitiveConstraint whiteConstraint(int colour, int pos) {
+        return new XeqC(v[pos], colour);
+    }
+
+    private PrimitiveConstraint redConstraint(int colour, int pos) {
+        ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
+        for (int i = 0; i < 4; i++) {
+            if (i == pos) {
+                continue;
+            }
+            constraints.add(new XeqC(v[i], colour));
+        }
+        return new Or(constraints);
+    }
+
+    private PrimitiveConstraint noneConstraint(int colour, int pos) {
+        return new Not(new XeqC(v[pos], colour));
+    }
+
+    private PrimitiveConstraint scoreConstraint(List<Integer> move, Multiset<Scores.Score> score) {
+        while (score.size() < 4) {
+            score.add(NONE);
+        }
+        ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
+        for (List<Scores.Score> combo : Scores.scoreCombinations(score)) {
+            ArrayList<PrimitiveConstraint> moveConstraints = Lists.newArrayList();
+            for (int i = 0; i < combo.size(); i++) {
+                Scores.Score s = combo.get(i);
+                if (s.equals(WHITE)) {
+                    moveConstraints.add(whiteConstraint(move.get(i), i));
+                } else if (s.equals(RED)) {
+                    moveConstraints.add(redConstraint(move.get(i), i));
+                } else if (s.equals(NONE)) {
+                    moveConstraints.add(noneConstraint(move.get(i), i));
+                }
+            }
+            constraints.add(new And(moveConstraints));
+        }
+        return new Or(constraints);
     }
 
     private int diff(List<Integer> move1, List<Integer> move2) {
@@ -394,18 +382,6 @@ public class TestScores {
             constraints.add(new XeqC(v[i], colour));
         }
         return new Or(constraints);
-    }
-
-    PrimitiveConstraint appearsInConstraint(List<Integer> move, Set<Integer> positions) {
-        ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
-        for (int i : positions) {
-            constraints.add(new XeqC(v[i], move.get(i)));
-        }
-        return new Or(constraints);
-    }
-
-    PrimitiveConstraint appearsInBothConstraint(int col1, int pos1, int col2, int pos2) {
-        return new And(new XeqC(v[pos1], col1), new XeqC(v[pos2], col2));
     }
 
 }
