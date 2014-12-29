@@ -115,9 +115,9 @@ public class TestScores {
         //      e.g. at each step look for a move that is edit-distance 1 from a previous one, and that has
         //      different colours
         makeMove(move(0, 1, 2, 3));
-        makeMove(move(0, 1, 2, 4));
-        makeMove(move(0, 1, 5, 4));
-        makeMove(move(0, 3, 5, 4));
+        makeMove(move(4, 1, 2, 3));
+        makeMove(move(4, 5, 2, 3));
+        makeMove(move(4, 5, 0, 3));
         makeMove(search());
         makeMove(search());
         makeMove(search());
@@ -140,6 +140,8 @@ public class TestScores {
 
         List<Integer> solution = Lists.newArrayList();
         // TODO: look for a solution that is close to others in set (not previous moves)
+        // TODO: or, for first search try to start with a move that is different to previous ones
+        // (doesn't repeat colours in positions that have been tried before) - i.e. aim to get some whites
         int numberOfSolutions = search.getSolutionListener().solutionsNo();
         for (int i = 1; i <= numberOfSolutions; i++) {
             solution.clear();
