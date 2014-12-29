@@ -76,17 +76,14 @@ public class TestScores {
         // TODO: choose colours to change based on how much info they gave in earlier mutations?
         // TODO: or use constraints in order to guide next move somehow?
         //      e.g. at each step look for a move that is edit-distance 1 from a previous one, and that has
-        //      different colours - or refine rule so it doesn't assume colours are different...
+        //      different colours
         makeMove(move(0, 1, 2, 3));
         makeMove(move(0, 1, 2, 4));
-//        makeMove(move(0, 1, 5, 4));
-//        makeMove(move(0, 3, 5, 4));
-//        makeMove(move(2, 3, 5, 4));
-
-//        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 1, 2, 4), 3);
-//        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 1, 5, 3), 2);
-//        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 4, 2, 3), 1);
-//        reportScoreDeltaFor(move(0, 1, 2, 3), move(5, 1, 2, 3), 0);
+        makeMove(move(0, 1, 5, 4));
+        makeMove(move(0, 3, 5, 4));
+        makeMove(move(2, 3, 5, 4));
+        makeMove(search());
+        makeMove(search());
 
         // at this point, stop and look at how far we've got
         // if #soln <=3 then just go through them
@@ -141,6 +138,9 @@ public class TestScores {
         boolean result = search.labeling(store, select);
 
         int numberOfSolutions = search.getSolutionListener().solutionsNo();
+        if (numberOfSolutions == 0) {
+            throw new IllegalStateException("Zero solutions for " + secret);
+        }
         if (numberOfSolutions == 23) {
             System.out.println("Alert: " + secret);
             search.printAllSolutions();
@@ -253,7 +253,9 @@ public class TestScores {
             doesNotAppearIn(oldCol, diffPos);
             doesNotAppearIn(newCol, diffPos);
             if (rd == 0) {
-                eitherDontAppearAnywhereOrBothAppearIn(oldCol, newCol, diffPosNeg);
+                if (hasDistinctColours(move1) && hasDistinctColours(move2)) {
+                    eitherDontAppearAnywhereOrBothAppearIn(oldCol, newCol, diffPosNeg);
+                }
             } else if (rd == 1) {
                 appearsIn(newCol, diffPosNeg);
             } else if (rd == -1) {
