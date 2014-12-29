@@ -70,16 +70,6 @@ public class TestScores {
             v[i] = new IntVar(store, "v" + i, 0, 5);
         }
 
-        // Keep a list of mutations to try
-        // If a position is found then remove all the mutations from that position
-        // If a new colour is found to be tried, then add it at the front of the list for that position
-        List<List<Integer>> mutations = Lists.newArrayList(
-                (List<Integer>) Lists.newArrayList(4, 1),
-                Lists.newArrayList(5, 2),
-                Lists.newArrayList(4, 3),
-                Lists.newArrayList(5, 0)
-        );
-
         // TODO: don't just go one step from 0123 - how to improve walk through?
         // TODO: choose colours to change based on how much info they gave in earlier mutations?
         // TODO: or use constraints in order to guide next move somehow?
