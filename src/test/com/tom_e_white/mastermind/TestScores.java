@@ -150,36 +150,25 @@ public class TestScores {
 
         boolean result = search.labeling(store, select);
 
-        List<Integer> bestSolution = null;
-        int bestWeight = -1;
-
+        List<Integer> solution = Lists.newArrayList();
         int numberOfSolutions = search.getSolutionListener().solutionsNo();
         for (int i = 1; i <= numberOfSolutions; i++) {
-            List<Integer> solution = Lists.newArrayList();
+            solution.clear();
             Domain[] sol = search.getSolutionListener().getSolution(i);
             for (int j = 0; j < sol.length; j++) {
                 solution.add(sol[j].valueEnumeration().nextElement()); // convert domain to int
             }
-            int weight = weight(solution);
-            if (bestSolution == null) {
-                bestSolution = solution;
-                bestWeight = weight;
-            }
             if (moves.contains(solution)) {
                 continue;
             }
-            if (weight > bestWeight) {
-                bestSolution = solution;
-                bestWeight = weight;
-            }
-//            System.out.println("Min dist: " + minDist(solution));
-//            System.out.println("Distinct?: " + hasDistinctColours(solution));
-            //break; // just return first to start with (unless already played it)
+            System.out.println("Min dist: " + minDist(solution));
+            System.out.println("Distinct?: " + hasDistinctColours(solution));
+            break; // just return first to start with (unless already played it)
         }
-        if (bestSolution.size() != 4) {
-            System.out.println(bestSolution);
+        if (solution.size() != 4) {
+            System.out.println(solution);
         }
-        return bestSolution;
+        return solution;
     }
 
     private int minDist(List<Integer> move) {
