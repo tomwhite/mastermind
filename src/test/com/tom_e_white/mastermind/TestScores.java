@@ -114,6 +114,7 @@ public class TestScores {
         // TODO: or use constraints in order to guide next move somehow?
         //      e.g. at each step look for a move that is edit-distance 1 from a previous one, and that has
         //      different colours
+        // TODO: or, if first move is 1 red or less, then switch numbers (don't use as many 2s or 3s)
         makeMove(move(0, 1, 2, 3));
         makeMove(move(4, 1, 2, 3));
         makeMove(move(4, 5, 2, 3));
@@ -192,7 +193,7 @@ public class TestScores {
         if (numberOfSolutions == 0) {
             throw new IllegalStateException("Zero solutions for " + secret);
         }
-        if (numberOfSolutions == 8) {
+        if (numberOfSolutions == 3) {
             reportGame(search);
         }
 //        for (int i = 1; i <= numberOfSolutions; i++) {
