@@ -28,7 +28,7 @@ public class TestScores {
     private Store store;
     private IntVar[] v;
 
-    private List<List<Integer>> moves = Lists.newArrayList();
+    private List<List<Integer>> moves;
 
     @Test
     public void test() {
@@ -98,6 +98,7 @@ public class TestScores {
     public int playGame() {
         System.out.println("New Game");
 
+        moves = Lists.newArrayList();
         store = new Store();
         v = new IntVar[4];
         for (int i = 0; i < v.length; i++) {
@@ -173,7 +174,7 @@ public class TestScores {
         if (numberOfSolutions == 0) {
             throw new IllegalStateException("Zero solutions for " + secret);
         }
-        if (numberOfSolutions == 23) {
+        if (numberOfSolutions == 6) {
             System.out.println("Alert: " + secret);
             search.printAllSolutions();
         }
@@ -188,6 +189,7 @@ public class TestScores {
     }
 
     public void makeMove(List<Integer> move) {
+        System.out.println("Move: " + move);
         moves.add(move);
 
         Multiset<Scores.Score> score = Scores.score(secret, move);
