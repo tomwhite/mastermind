@@ -18,9 +18,7 @@ import static com.tom_e_white.mastermind.Scores.Score.RED;
 import static com.tom_e_white.mastermind.Scores.Score.WHITE;
 import static com.tom_e_white.mastermind.Scores.move;
 import static com.tom_e_white.mastermind.Scores.score;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class TestScores {
 
@@ -102,7 +100,7 @@ public class TestScores {
     }
 
     public int playGame() {
-        System.out.println("New Game");
+        //System.out.println("New Game");
 
         moves = Lists.newArrayList();
         store = new Store();
@@ -120,19 +118,9 @@ public class TestScores {
         makeMove(move(0, 1, 2, 4));
         makeMove(move(0, 1, 5, 4));
         makeMove(move(0, 3, 5, 4));
-        //makeMove(move(2, 3, 5, 4));
         makeMove(search());
         makeMove(search());
         makeMove(search());
-
-        // at this point, stop and look at how far we've got
-        // if #soln <=3 then just go through them
-        // o/w find 2 solns that are diff=1 apart and run algorithm again
-
-//        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 1, 2, 5), 3);
-//        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 1, 4, 3), 2);
-//        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 5, 2, 3), 1);
-//        reportScoreDeltaFor(move(0, 1, 2, 3), move(4, 1, 2, 3), 0);
 
         return countSolutions();
     }
@@ -151,6 +139,7 @@ public class TestScores {
         boolean result = search.labeling(store, select);
 
         List<Integer> solution = Lists.newArrayList();
+        // TODO: look for a solution that is close to others in set (not previous moves)
         int numberOfSolutions = search.getSolutionListener().solutionsNo();
         for (int i = 1; i <= numberOfSolutions; i++) {
             solution.clear();
@@ -161,13 +150,11 @@ public class TestScores {
             if (moves.contains(solution)) {
                 continue;
             }
-            System.out.println("Min dist: " + minDist(solution));
-            System.out.println("Distinct?: " + hasDistinctColours(solution));
+            //System.out.println("Min dist: " + minDist(solution));
+            //System.out.println("Distinct?: " + hasDistinctColours(solution));
             break; // just return first to start with (unless already played it)
         }
-        if (solution.size() != 4) {
-            System.out.println(solution);
-        }
+        assertEquals(4, solution.size());
         return solution;
     }
 
@@ -183,7 +170,7 @@ public class TestScores {
     }
 
     private int weight(List<Integer> move) {
-        return //(minDist(move) == 1 ? 1 : 0);// +
+        return (minDist(move) == 1 ? 1 : 0) +
                  (hasDistinctColours(move) ? 1 : 0);
     }
 
@@ -204,8 +191,7 @@ public class TestScores {
             throw new IllegalStateException("Zero solutions for " + secret);
         }
         if (numberOfSolutions == 8) {
-            System.out.println("Alert: " + secret);
-            search.printAllSolutions();
+            reportGame(search);
         }
 //        for (int i = 1; i <= numberOfSolutions; i++) {
 //            Domain[] solution = search.getSolutionListener().getSolution(i);
@@ -217,8 +203,16 @@ public class TestScores {
         return numberOfSolutions;
     }
 
+    private void reportGame(Search<IntVar> search) {
+        System.out.println("Report: " + secret);
+        for (List<Integer> move : moves) {
+            System.out.println(move + "; " + Scores.score(secret, move));
+        }
+        search.printAllSolutions();
+    }
+
     public void makeMove(List<Integer> move) {
-        System.out.println("Move: " + move);
+        //System.out.println("Move: " + move);
         moves.add(move);
 
         Multiset<Scores.Score> score = Scores.score(secret, move);
@@ -316,9 +310,9 @@ public class TestScores {
         Multiset<Scores.Score> score2 = Scores.score(secret, move2);
 
         Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
-        System.out.println(secret);
-        System.out.println(move1 + "; " + score1);
-        System.out.println(move2 + "; " + score2);
+//        System.out.println(secret);
+//        System.out.println(move1 + "; " + score1);
+//        System.out.println(move2 + "; " + score2);
         int rd = scoreDelta.getRedDelta();
         int wd = scoreDelta.getWhiteDelta();
         int oldCol = move1.get(diffPos);
@@ -356,26 +350,26 @@ public class TestScores {
                 }
             }
         }
-        System.out.println();
+        //System.out.println();
     }
 
     void appearsIn(int colour, int pos) {
-        System.out.println(colour + " appears in pos " + pos);
+        //System.out.println(colour + " appears in pos " + pos);
         assertEquals(colour + " appears in pos " + pos, (long) secret.get(pos), colour);
         store.impose(new XeqC(v[pos], colour));
-        System.out.println("TODO: no need to mutate " + pos + " again");
+        //System.out.println("TODO: no need to mutate " + pos + " again");
     }
 
     void doesNotAppearIn(int colour, int pos) {
-        System.out.println(colour + " does not appear in " + pos);
+        //System.out.println(colour + " does not appear in " + pos);
         assertFalse(colour + " does not appear in " + pos, secret.get(pos).equals(colour));
         store.impose(new Not(new XeqC(v[pos], colour)));
     }
 
     boolean appearsIn(int colour, Set<Integer> positions) {
-        System.out.println(colour + " appears in one of pos " + positions);
+        //System.out.println(colour + " appears in one of pos " + positions);
         store.impose(appearsInConstraint(colour, positions));
-        System.out.println("TODO: we know " + colour + " appears so try it again (in one of " + positions + ")");
+        //System.out.println("TODO: we know " + colour + " appears so try it again (in one of " + positions + ")");
 
         boolean contains = false;
         ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
@@ -389,17 +383,17 @@ public class TestScores {
     }
 
     void doesNotAppearAnywhere(int colour) {
-        System.out.println(colour + " does not appear anywhere");
+        //System.out.println(colour + " does not appear anywhere");
         assertFalse(colour + " does not appear anywhere", secret.contains(colour));
         store.impose(new Not(new XeqC(v[0], colour)));
         store.impose(new Not(new XeqC(v[1], colour)));
         store.impose(new Not(new XeqC(v[2], colour)));
         store.impose(new Not(new XeqC(v[3], colour)));
-        System.out.println("TODO: no need to try " + colour + " again");
+        //System.out.println("TODO: no need to try " + colour + " again");
     }
 
     void eitherDontAppearAnywhereOrBothAppearIn(int col1, int col2, Set<Integer> positions) {
-        System.out.println("EITHER " + col1 + " and " + col2 + " don't appear anywhere OR " + col1 + " and " + col2 + " both appear in pos " + positions);
+        //System.out.println("EITHER " + col1 + " and " + col2 + " don't appear anywhere OR " + col1 + " and " + col2 + " both appear in pos " + positions);
 
         ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
         constraints.add(new Not(new XeqC(v[0], col1)));
