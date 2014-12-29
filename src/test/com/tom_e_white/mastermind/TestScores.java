@@ -2,6 +2,7 @@ package com.tom_e_white.mastermind;
 
 import com.google.common.collect.*;
 import org.jacop.constraints.*;
+import org.jacop.core.Domain;
 import org.jacop.core.IntVar;
 import org.jacop.core.Store;
 import org.jacop.search.*;
@@ -58,6 +59,7 @@ public class TestScores {
                 }
             }
         }
+        System.out.println("Histogram:");
         System.out.println(Multisets.copyHighestCountFirst(hist));
     }
 
@@ -77,9 +79,9 @@ public class TestScores {
         //      different colours - or refine rule so it doesn't assume colours are different...
         makeMove(move(0, 1, 2, 3));
         makeMove(move(0, 1, 2, 4));
-        makeMove(move(0, 1, 5, 4));
-        makeMove(move(0, 3, 5, 4));
-        makeMove(move(2, 3, 5, 4));
+//        makeMove(move(0, 1, 5, 4));
+//        makeMove(move(0, 3, 5, 4));
+//        makeMove(move(2, 3, 5, 4));
 
 //        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 1, 2, 4), 3);
 //        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 1, 5, 3), 2);
@@ -95,6 +97,38 @@ public class TestScores {
 //        reportScoreDeltaFor(move(0, 1, 2, 3), move(0, 5, 2, 3), 1);
 //        reportScoreDeltaFor(move(0, 1, 2, 3), move(4, 1, 2, 3), 0);
 
+        return countSolutions();
+    }
+
+    private List<Integer> search() {
+        Search<IntVar> search = new DepthFirstSearch<IntVar>();
+        SelectChoicePoint<IntVar> select =
+                new InputOrderSelect<IntVar>(store, v,
+                        new IndomainMin<IntVar>());
+
+        search.setAssignSolution(false); // don't assign variables after finding a solution, http://sourceforge.net/p/jacop-solver/discussion/1220992/thread/4caf2979/
+        search.getSolutionListener().searchAll(true);
+        search.getSolutionListener().recordSolutions(true);
+        search.setPrintInfo(false);
+
+        boolean result = search.labeling(store, select);
+
+        List<Integer> solution = Lists.newArrayList();
+        int numberOfSolutions = search.getSolutionListener().solutionsNo();
+        for (int i = 1; i <= numberOfSolutions; i++) {
+            Domain[] sol = search.getSolutionListener().getSolution(i);
+            for (int j = 0; j < sol.length; j++) {
+                solution.add(sol[j].valueEnumeration().nextElement()); // convert domain to int
+            }
+            break; // just return first to start with
+        }
+        if (solution.size() != 4) {
+            System.out.println(solution);
+        }
+        return solution;
+    }
+
+    private int countSolutions() {
         Search<IntVar> search = new DepthFirstSearch<IntVar>();
         SelectChoicePoint<IntVar> select =
                 new InputOrderSelect<IntVar>(store, v,
@@ -111,8 +145,14 @@ public class TestScores {
             System.out.println("Alert: " + secret);
             search.printAllSolutions();
         }
+//        for (int i = 1; i <= numberOfSolutions; i++) {
+//            Domain[] solution = search.getSolutionListener().getSolution(i);
+//            for (int j = 0; j < solution.length; j++) {
+//                System.out.print(solution[j]);
+//            }
+//            System.out.println();
+//        }
         return numberOfSolutions;
-
     }
 
     public void makeMove(List<Integer> move) {
