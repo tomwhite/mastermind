@@ -199,6 +199,11 @@ public class TestScores {
         return diffPos;
     }
 
+    private boolean hasDistinctColours(List<Integer> move) {
+        return Sets.newHashSet(move).size() == 4;
+    }
+
+
     public void reportScoreDeltaFor(List<Integer> move1, List<Integer> move2, int diffPos) {
         Set<Integer> diffPosNeg = Sets.newTreeSet(Sets.newHashSet(0, 1, 2, 3));
         diffPosNeg.remove(diffPos);
@@ -226,19 +231,23 @@ public class TestScores {
             }
         } else if (wd == 1) {
             appearsIn(newCol, diffPos);
-            if (rd == 0) {
-                doesNotAppearAnywhere(oldCol);
-            } else if (rd == -1) {
-                appearsIn(oldCol, diffPosNeg);  // only if colours are distinct
-                doesNotAppearIn(oldCol, diffPos);
+            doesNotAppearIn(oldCol, diffPos);
+            if (hasDistinctColours(move1) && hasDistinctColours(move2)) {
+                if (rd == 0) {
+                    doesNotAppearAnywhere(oldCol);
+                } else if (rd == -1) {
+                    appearsIn(oldCol, diffPosNeg);
+                }
             }
         } else if (wd == -1) {
             appearsIn(oldCol, diffPos);
-            if (rd == 0) {
-                doesNotAppearAnywhere(newCol);
-            } else if (rd == 1) {
-                appearsIn(newCol, diffPosNeg); // only if colours are distinct
-                doesNotAppearIn(newCol, diffPos);
+            doesNotAppearIn(newCol, diffPos);
+            if (hasDistinctColours(move1) && hasDistinctColours(move2)) {
+                if (rd == 0) {
+                    doesNotAppearAnywhere(newCol);
+                } else if (rd == 1) {
+                    appearsIn(newCol, diffPosNeg);
+                }
             }
         }
         System.out.println();
