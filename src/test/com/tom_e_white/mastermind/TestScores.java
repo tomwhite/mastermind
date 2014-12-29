@@ -181,18 +181,31 @@ public class TestScores {
             constraints.add(appearsInBothConstraint(move.get(1), 1, move.get(3), 3));
             constraints.add(appearsInBothConstraint(move.get(2), 2, move.get(3), 3));
             store.impose(new Or(constraints));
-        } else if (wc == 0 && rc == 1) {
+        } else if (wc == 3 && rc == 0) {
+
+        } else if (wc == 4) { // rc == 0
+            appearsIn(move.get(0), 0);
+            appearsIn(move.get(1), 1);
+            appearsIn(move.get(2), 2);
+            appearsIn(move.get(3), 3);
+        } else if (wc == 0 && rc == 1) { // common
             ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
             constraints.add(appearsInConstraint(move.get(0), Sets.newHashSet(1, 2, 3)));
             constraints.add(appearsInConstraint(move.get(1), Sets.newHashSet(0, 2, 3)));
             constraints.add(appearsInConstraint(move.get(2), Sets.newHashSet(0, 1, 3)));
             constraints.add(appearsInConstraint(move.get(3), Sets.newHashSet(0, 1, 2)));
             store.impose(new Or(constraints));
-        } else if (wc == 4) {
-            appearsIn(move.get(0), 0);
-            appearsIn(move.get(1), 1);
-            appearsIn(move.get(2), 2);
-            appearsIn(move.get(3), 3);
+        } else if (wc == 0 && rc == 2) { // common
+        } else if (wc == 0 && rc == 3) { // common
+        } else if (wc == 0 && rc == 4) {
+
+        } else if (wc == 1 && rc == 1) { // common
+        } else if (wc == 1 && rc == 2) { // common
+        } else if (wc == 1 && rc == 3) {
+
+        } else if (wc == 2 && rc == 1) {
+        } else if (wc == 2 && rc == 2) {
+
         }
 
         if (wc == 0) {
