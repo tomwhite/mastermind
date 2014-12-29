@@ -146,11 +146,15 @@ public class TestScores {
         List<Integer> solution = Lists.newArrayList();
         int numberOfSolutions = search.getSolutionListener().solutionsNo();
         for (int i = 1; i <= numberOfSolutions; i++) {
+            solution.clear();
             Domain[] sol = search.getSolutionListener().getSolution(i);
             for (int j = 0; j < sol.length; j++) {
                 solution.add(sol[j].valueEnumeration().nextElement()); // convert domain to int
             }
-            break; // just return first to start with
+            if (moves.contains(solution)) {
+                continue;
+            }
+            break; // just return first to start with (unless already played it)
         }
         if (solution.size() != 4) {
             System.out.println(solution);
@@ -174,7 +178,7 @@ public class TestScores {
         if (numberOfSolutions == 0) {
             throw new IllegalStateException("Zero solutions for " + secret);
         }
-        if (numberOfSolutions == 6) {
+        if (numberOfSolutions == 9) {
             System.out.println("Alert: " + secret);
             search.printAllSolutions();
         }
