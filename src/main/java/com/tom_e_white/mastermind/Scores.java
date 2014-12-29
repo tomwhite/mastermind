@@ -9,7 +9,7 @@ import static com.tom_e_white.mastermind.Scores.Score.WHITE;
 
 public class Scores {
 
-    public enum Score { RED, WHITE }
+    public enum Score { RED, WHITE, NONE }
 
     public static class ScoreDelta {
         int whiteDelta;
@@ -208,6 +208,10 @@ public class Scores {
     }
     public static ScoreDelta scoreDelta(Multiset<Score> score1, Multiset<Score> score2) {
         return new ScoreDelta(score2.count(WHITE) - score1.count(WHITE), score2.count(RED) - score1.count(RED));
+    }
+
+    public static Set<List<Score>> scoreCombinations(Multiset<Score> score) {
+        return Sets.newLinkedHashSet(Collections2.permutations(score));
     }
 
 
