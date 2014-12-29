@@ -83,6 +83,8 @@ public class TestScores {
         // TODO: don't just go one step from 0123 - how to improve walk through?
         // TODO: choose colours to change based on how much info they gave in earlier mutations?
         // TODO: or use constraints in order to guide next move somehow?
+        //      e.g. at each step look for a move that is edit-distance 1 from a previous one, and that has
+        //      different colours - or refine rule so it doesn't assume colours are different...
         makeMove(move(0, 1, 2, 3));
         makeMove(move(0, 1, 2, 4));
         makeMove(move(0, 1, 5, 4));
@@ -115,7 +117,7 @@ public class TestScores {
         boolean result = search.labeling(store, select);
 
         int numberOfSolutions = search.getSolutionListener().solutionsNo();
-        if (numberOfSolutions == 5) {
+        if (numberOfSolutions == 23) {
             System.out.println("Alert: " + secret);
             search.printAllSolutions();
         }
@@ -174,12 +176,13 @@ public class TestScores {
             return;
         }
 
-        List<Integer> previousMove = moves.get(moves.size() - 2);
-        int diffPos = diff(previousMove, move);
-        if (diffPos == -1) {
-            return;
+        for (List<Integer> previousMove : moves) {
+            int diffPos = diff(previousMove, move);
+            if (diffPos != -1) {
+                reportScoreDeltaFor(previousMove, move, diffPos);
+                break; // TODO: remove this so we can check all moves edit dist 1 away
+            }
         }
-        reportScoreDeltaFor(previousMove, move, diffPos);
     }
 
     private int diff(List<Integer> move1, List<Integer> move2) {
@@ -226,7 +229,7 @@ public class TestScores {
             if (rd == 0) {
                 doesNotAppearAnywhere(oldCol);
             } else if (rd == -1) {
-                appearsIn(oldCol, diffPosNeg);
+                appearsIn(oldCol, diffPosNeg);  // only if colours are distinct
                 doesNotAppearIn(oldCol, diffPos);
             }
         } else if (wd == -1) {
@@ -234,7 +237,7 @@ public class TestScores {
             if (rd == 0) {
                 doesNotAppearAnywhere(newCol);
             } else if (rd == 1) {
-                appearsIn(newCol, diffPosNeg);
+                appearsIn(newCol, diffPosNeg); // only if colours are distinct
                 doesNotAppearIn(newCol, diffPos);
             }
         }
