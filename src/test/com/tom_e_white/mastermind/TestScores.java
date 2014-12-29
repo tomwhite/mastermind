@@ -92,7 +92,13 @@ public class TestScores {
             }
         }
         System.out.println("Histogram:");
-        System.out.println(Multisets.copyHighestCountFirst(hist));
+        hist = Multisets.copyHighestCountFirst(hist);
+        System.out.println(hist);
+        double total = 0;
+        for (Integer i : hist.elementSet()) {
+            total += (hist.count(i) * 1.0) / i;
+        }
+        System.out.println("Total: " + total + ", " + (100*total/1296) + "%");
     }
 
     public int playGame() {
@@ -114,7 +120,8 @@ public class TestScores {
         makeMove(move(0, 1, 2, 4));
         makeMove(move(0, 1, 5, 4));
         makeMove(move(0, 3, 5, 4));
-        makeMove(move(2, 3, 5, 4));
+        //makeMove(move(2, 3, 5, 4));
+        makeMove(search());
         makeMove(search());
         makeMove(search());
 
@@ -178,7 +185,7 @@ public class TestScores {
         if (numberOfSolutions == 0) {
             throw new IllegalStateException("Zero solutions for " + secret);
         }
-        if (numberOfSolutions == 9) {
+        if (numberOfSolutions == 8) {
             System.out.println("Alert: " + secret);
             search.printAllSolutions();
         }
