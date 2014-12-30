@@ -232,6 +232,8 @@ public class TestScores {
                 reportScoreDeltaFor(previousMove, move, Iterables.getOnlyElement(diff));
             } else if (diff.size() == 2) {
                 reportScoreDeltaFor(previousMove, move, diff);
+            } else if (diff.size() == 3) {
+                reportScoreDeltaFor3(previousMove, move, diff);
             }
         }
     }
@@ -386,6 +388,55 @@ public class TestScores {
             store.impose(constraint);
         }
     }
+
+    public void reportScoreDeltaFor3(List<Integer> move1, List<Integer> move2, Set<Integer> diff) {
+        Multiset<Scores.Score> score1 = Scores.score(secret, move1);
+        Multiset<Scores.Score> score2 = Scores.score(secret, move2);
+
+        Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
+
+        int rd = scoreDelta.getRedDelta();
+        int wd = scoreDelta.getWhiteDelta();
+
+//        System.out.println(secret);
+//        System.out.println(move1 + "; " + score1);
+//        System.out.println(move2 + "; " + score2);
+
+        PrimitiveConstraint constraint = null;
+        if (wd == 0) {
+            if (rd == 1) {
+                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, IGNORE, IGNORE)), diff);
+            } else if (rd == -1) {
+                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, IGNORE, IGNORE)), diff);
+            } else if (rd == 2) {
+                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, RED, IGNORE)), diff);
+            } else if (rd == -2) {
+                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, RED, IGNORE)), diff);
+            } else if (rd == 3) {
+                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, RED, RED)), diff);
+            } else if (rd == -3) {
+                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, RED, RED)), diff);
+            }
+        } else if (wd == 1) {
+            constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, IGNORE)), diff);
+        } else if (wd == -1) {
+            constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, IGNORE)), diff);
+        } else if (wd == 2) {
+            constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff);
+        } else if (wd == -2) {
+            constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff);
+        } else if (wd == 3) {
+            constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, WHITE, WHITE)), diff);
+        } else if (wd == -3) {
+            constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, WHITE, WHITE)), diff);
+        }
+
+        if (constraint != null) {
+            assertConstraint(constraint);
+            store.impose(constraint);
+        }
+    }
+
     public void reportScoreDeltaFor(List<Integer> move1, List<Integer> move2, int diffPos) {
         Set<Integer> diffPosNeg = Sets.newTreeSet(Sets.newHashSet(0, 1, 2, 3));
         diffPosNeg.remove(diffPos);
