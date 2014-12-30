@@ -31,7 +31,7 @@ public class Game {
         this.secret = secret;
     }
 
-    public int playGame(Scorer scorer) {
+    public Result playGame(Scorer scorer) {
         //System.out.println("New Game");
 
         moves = Lists.newArrayList();
@@ -57,21 +57,26 @@ public class Game {
                 move(4, 5, 0, 3)
         );
         int moveCount = 0;
-        int solutionsCount = 1296;
         while (moveCount < 7) {
-            if (solutionsCount == 1) {
+            if (moveCount < staticMoves.size()) {
+                makeMove(staticMoves.get(moveCount));
+            } else {
                 makeMove(search());
             }
-            if (moveCount < staticMoves.size()) {
-                solutionsCount = makeMove(staticMoves.get(moveCount));
-            } else {
-                solutionsCount = makeMove(search());
-            }
             moveCount++;
+            if (hasWon()) {
+                break;
+            }
         }
-        solutionsCount = countSolutions();
-        makeMove(search());
-        return solutionsCount;
+        int solutionsCount = countSolutions();
+        if (!hasWon()) {
+            makeMove(search());
+        }
+        return new Result(solutionsCount, hasWon());
+    }
+
+    private boolean hasWon() {
+        return scores.get(moves.get(moves.size() - 1)).equals(ImmutableMultiset.of(WHITE, WHITE, WHITE, WHITE));
     }
 
     private List<Integer> search() {
@@ -527,12 +532,12 @@ public class Game {
 
         Scorer scorer = new HumanScorer();
         Game game = new Game();
-        game.playGame(scorer);
-
-        // print out move number and guess
-        // ask for player to enter white and red pegs - e.g. rrw for two reds and a white (in any order)
-        // if we get it right say so!
-        // if we run out of goes say that the player won
+        Result result = game.playGame(scorer);
+        if (result.hasWon()) {
+            System.out.println("I won! Thanks for playing.");
+        } else {
+            System.out.println("You won! Congratulations.");
+        }
     }
 
 }

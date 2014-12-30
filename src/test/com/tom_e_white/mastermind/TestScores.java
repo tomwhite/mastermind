@@ -71,7 +71,7 @@ public class TestScores {
                     for (int l = 0; l < 6; l++) {
                         List<Integer> secret = move(i, j, k, l);
                         Game game = new Game(secret);
-                        hist.add(game.playGame(new ComputerScorer(secret)));
+                        hist.add(game.playGame(new ComputerScorer(secret)).getSolutionsCount());
                     }
                 }
             }
