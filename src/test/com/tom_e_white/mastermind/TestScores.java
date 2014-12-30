@@ -8,10 +8,7 @@ import org.jacop.core.Store;
 import org.jacop.search.*;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.tom_e_white.mastermind.Scores.Score.*;
 import static com.tom_e_white.mastermind.Scores.move;
@@ -24,7 +21,9 @@ public class TestScores {
     private Store store;
     private IntVar[] v;
 
+    private Scorer scorer;
     private List<List<Integer>> moves;
+    private Map<List<Integer>, Multiset<Scores.Score>> scores;
 
     @Test
     public void test() {
@@ -82,7 +81,7 @@ public class TestScores {
                 for (int k = 0; k < 6; k++) {
                     for (int l = 0; l < 6; l++) {
                         secret = move(i, j, k, l);
-                        hist.add(playGame());
+                        hist.add(playGame(new ComputerScorer(secret)));
                     }
                 }
             }
@@ -97,10 +96,12 @@ public class TestScores {
         System.out.println("Total: " + total + ", " + (100*total/1296) + "%");
     }
 
-    public int playGame() {
+    public int playGame(Scorer scorer) {
         //System.out.println("New Game");
 
         moves = Lists.newArrayList();
+        scores = Maps.newHashMap();
+        this.scorer = scorer;
         store = new Store();
         v = new IntVar[4];
         for (int i = 0; i < v.length; i++) {
@@ -207,7 +208,7 @@ public class TestScores {
     private void reportGame(Search<IntVar> search) {
         System.out.println("Report: " + secret);
         for (List<Integer> move : moves) {
-            System.out.println(move + "; " + Scores.score(secret, move));
+            System.out.println(move + "; " + scores.get(move));
         }
         search.printAllSolutions();
     }
@@ -216,7 +217,8 @@ public class TestScores {
         //System.out.println("Move: " + move);
         moves.add(move);
 
-        Multiset<Scores.Score> score = Scores.score(secret, move);
+        Multiset<Scores.Score> score = scorer.score(move);
+        scores.put(move, score);
 
         PrimitiveConstraint constraint = scoreConstraint(move, score);
         assertConstraint(constraint);
@@ -289,6 +291,9 @@ public class TestScores {
 
     // This ensures that we don't add a constraint that is false by failing immediately
     private void assertConstraint(PrimitiveConstraint c) {
+        if (secret == null) {
+            return;
+        }
         assertTrue(c.toString(), constraintToExpr(c));
     }
 
@@ -350,8 +355,8 @@ public class TestScores {
     }
 
     public void reportScoreDeltaFor(List<Integer> move1, List<Integer> move2, Set<Integer> diff) {
-        Multiset<Scores.Score> score1 = Scores.score(secret, move1);
-        Multiset<Scores.Score> score2 = Scores.score(secret, move2);
+        Multiset<Scores.Score> score1 = scores.get(move1);
+        Multiset<Scores.Score> score2 = scores.get(move2);
 
         Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
 
@@ -394,8 +399,8 @@ public class TestScores {
     }
 
     public void reportScoreDeltaFor3(List<Integer> move1, List<Integer> move2, Set<Integer> diff) {
-        Multiset<Scores.Score> score1 = Scores.score(secret, move1);
-        Multiset<Scores.Score> score2 = Scores.score(secret, move2);
+        Multiset<Scores.Score> score1 = scores.get(move1);
+        Multiset<Scores.Score> score2 = scores.get(move2);
 
         Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
 
@@ -445,8 +450,8 @@ public class TestScores {
         Set<Integer> diffPosNeg = Sets.newTreeSet(Sets.newHashSet(0, 1, 2, 3));
         diffPosNeg.remove(diffPos);
 
-        Multiset<Scores.Score> score1 = Scores.score(secret, move1);
-        Multiset<Scores.Score> score2 = Scores.score(secret, move2);
+        Multiset<Scores.Score> score1 = scores.get(move1);
+        Multiset<Scores.Score> score2 = scores.get(move2);
 
         Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
 //        System.out.println(secret);
@@ -494,36 +499,40 @@ public class TestScores {
 
     void appearsIn(int colour, int pos) {
         //System.out.println(colour + " appears in pos " + pos);
-        assertEquals(colour + " appears in pos " + pos, (long) secret.get(pos), colour);
+        if (secret != null) {
+            assertEquals(colour + " appears in pos " + pos, (long) secret.get(pos), colour);
+        }
         store.impose(new XeqC(v[pos], colour));
         //System.out.println("TODO: no need to mutate " + pos + " again");
     }
 
     void doesNotAppearIn(int colour, int pos) {
         //System.out.println(colour + " does not appear in " + pos);
-        assertFalse(colour + " does not appear in " + pos, secret.get(pos).equals(colour));
+        if (secret != null) {
+            assertFalse(colour + " does not appear in " + pos, secret.get(pos).equals(colour));
+        }
         store.impose(new Not(new XeqC(v[pos], colour)));
     }
 
-    boolean appearsIn(int colour, Set<Integer> positions) {
+    void appearsIn(int colour, Set<Integer> positions) {
         //System.out.println(colour + " appears in one of pos " + positions);
         store.impose(appearsInConstraint(colour, positions));
         //System.out.println("TODO: we know " + colour + " appears so try it again (in one of " + positions + ")");
 
-        boolean contains = false;
-        ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
-        for (int i : positions) {
-            constraints.add(new XeqC(v[i], colour));
-            contains = contains || secret.get(i).equals(colour);
+        if (secret != null) {
+            boolean contains = false;
+            for (int i : positions) {
+                contains = contains || secret.get(i).equals(colour);
+            }
+            assertTrue(colour + " appears in one of pos " + positions, contains);
         }
-        store.impose(new Or(constraints));
-        assertTrue(colour + " appears in one of pos " + positions, contains);
-        return contains;
     }
 
     void doesNotAppearAnywhere(int colour) {
         //System.out.println(colour + " does not appear anywhere");
-        assertFalse(colour + " does not appear anywhere", secret.contains(colour));
+        if (secret != null) {
+            assertFalse(colour + " does not appear anywhere", secret.contains(colour));
+        }
         store.impose(new Not(new XeqC(v[0], colour)));
         store.impose(new Not(new XeqC(v[1], colour)));
         store.impose(new Not(new XeqC(v[2], colour)));
