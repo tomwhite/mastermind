@@ -364,6 +364,10 @@ public class TestScores {
 
         PrimitiveConstraint constraint = null;
         if (wd == 0) {
+            // TODO: this is not strictly correct, consider the following where RED is not pos 0=3 or 3=2
+            // [3, 5, 5, 0]
+            // [2, 5, 0, 0]; [WHITE x 2]
+            // [3, 5, 0, 2]; [RED, WHITE x 2]
             if (rd == 1) {
                 constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, IGNORE)), diff);
             } else if (rd == -1) {
