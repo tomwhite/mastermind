@@ -19,11 +19,15 @@ public class HumanScorer implements Scorer {
         try {
             String line = br.readLine();
             HashMultiset<Scores.Score> score = HashMultiset.create();
+            // add whites first
+            for (char c : line.toCharArray()) {
+                if (c == 'w' || c == 'W') {
+                    score.add(Scores.Score.WHITE);
+                }
+            }
             for (char c : line.toCharArray()) {
                 if (c == 'r' || c == 'R') {
                     score.add(Scores.Score.RED);
-                } else if (c == 'w' || c == 'W') {
-                    score.add(Scores.Score.WHITE);
                 }
             }
             return score;

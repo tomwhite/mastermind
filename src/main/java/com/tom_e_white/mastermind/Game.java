@@ -49,15 +49,29 @@ public class Game {
         //      e.g. at each step look for a move that is edit-distance 1 from a previous one, and that has
         //      different colours
         // TODO: or, if first move is 1 red or less, then switch numbers (don't use as many 2s or 3s)
-        makeMove(move(0, 1, 2, 3));
-        makeMove(move(4, 1, 2, 3));
-        makeMove(move(4, 5, 2, 3));
-        makeMove(move(4, 5, 0, 3));
-        makeMove(search());
-        makeMove(search());
-        makeMove(search());
 
-        return countSolutions();
+        List<List<Integer>> staticMoves = Lists.newArrayList(
+                move(0, 1, 2, 3),
+                move(4, 1, 2, 3),
+                move(4, 5, 2, 3),
+                move(4, 5, 0, 3)
+        );
+        int moveCount = 0;
+        int solutionsCount = 1296;
+        while (moveCount < 7) {
+            if (solutionsCount == 1) {
+                makeMove(search());
+            }
+            if (moveCount < staticMoves.size()) {
+                solutionsCount = makeMove(staticMoves.get(moveCount));
+            } else {
+                solutionsCount = makeMove(search());
+            }
+            moveCount++;
+        }
+        solutionsCount = countSolutions();
+        makeMove(search());
+        return solutionsCount;
     }
 
     private List<Integer> search() {
@@ -117,6 +131,7 @@ public class Game {
                 new InputOrderSelect<IntVar>(store, v,
                         new IndomainMin<IntVar>());
 
+        search.setAssignSolution(false);
         search.getSolutionListener().searchAll(true);
         search.getSolutionListener().recordSolutions(true);
         search.setPrintInfo(false);
@@ -127,9 +142,9 @@ public class Game {
         if (numberOfSolutions == 0) {
             throw new IllegalStateException("Zero solutions for " + secret);
         }
-        if (numberOfSolutions == 6) {
-            reportGame(search);
-        }
+//        if (numberOfSolutions == 6) {
+//            reportGame(search);
+//        }
 //        for (int i = 1; i <= numberOfSolutions; i++) {
 //            Domain[] solution = search.getSolutionListener().getSolution(i);
 //            for (int j = 0; j < solution.length; j++) {
@@ -148,7 +163,7 @@ public class Game {
         search.printAllSolutions();
     }
 
-    private void makeMove(List<Integer> move) {
+    private int makeMove(List<Integer> move) {
         //System.out.println("Move: " + move);
         moves.add(move);
 
@@ -160,7 +175,7 @@ public class Game {
         store.impose(constraint);
 
         if (moves.size() <= 1) {
-            return;
+            return countSolutions();
         }
 
         for (List<Integer> previousMove : moves) {
@@ -173,6 +188,7 @@ public class Game {
                 reportScoreDeltaFor3(previousMove, move, diff);
             }
         }
+        return countSolutions();
     }
 
     private PrimitiveConstraint whiteConstraint(int colour, int pos) {
