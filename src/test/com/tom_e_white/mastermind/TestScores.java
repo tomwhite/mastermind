@@ -69,8 +69,8 @@ public class TestScores {
             for (int j = 0; j < 6; j++) {
                 for (int k = 0; k < 6; k++) {
                     for (int l = 0; l < 6; l++) {
-                        Game game = new Game();
                         List<Integer> secret = move(i, j, k, l);
+                        Game game = new Game(secret);
                         hist.add(game.playGame(new ComputerScorer(secret)));
                     }
                 }

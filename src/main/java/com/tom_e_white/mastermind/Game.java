@@ -24,6 +24,13 @@ public class Game {
     private List<List<Integer>> moves;
     private Map<List<Integer>, Multiset<Scores.Score>> scores;
 
+    public Game() {
+    }
+
+    public Game(List<Integer> secret) {
+        this.secret = secret;
+    }
+
     public int playGame(Scorer scorer) {
         //System.out.println("New Game");
 
