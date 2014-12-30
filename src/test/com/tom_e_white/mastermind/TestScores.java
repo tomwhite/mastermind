@@ -13,9 +13,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.tom_e_white.mastermind.Scores.Score.NONE;
-import static com.tom_e_white.mastermind.Scores.Score.RED;
-import static com.tom_e_white.mastermind.Scores.Score.WHITE;
+import static com.tom_e_white.mastermind.Scores.Score.*;
 import static com.tom_e_white.mastermind.Scores.move;
 import static com.tom_e_white.mastermind.Scores.score;
 import static org.junit.Assert.*;
@@ -358,17 +356,25 @@ public class TestScores {
         int rd = scoreDelta.getRedDelta();
         int wd = scoreDelta.getWhiteDelta();
 
+//        System.out.println(secret);
+//        System.out.println(move1 + "; " + score1);
+//        System.out.println(move2 + "; " + score2);
+
         PrimitiveConstraint constraint = null;
-        if (wd == 0 && rd == 0) {
-//            store.impose(scoreConstraint(move2, HashMultiset.<Scores.Score>create(), diff));
-//        } else if (rd == 1 && wd == 0) {
-//            store.impose(scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED)), diff));
-//        } else if (rd == -1 && wd == 0) {
-//            store.impose(scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED)), diff));
+        if (wd == 0) {
+            if (rd == 1) {
+                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, IGNORE)), diff);
+            } else if (rd == -1) {
+                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, IGNORE)), diff);
+            }
         } else if (wd == 1) {
             constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE)), diff);
         } else if (wd == -1) {
             constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE)), diff);
+        } else if (wd == 2) {
+            constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff);
+        } else if (wd == -2) {
+            constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff);
         }
 
         if (constraint != null) {

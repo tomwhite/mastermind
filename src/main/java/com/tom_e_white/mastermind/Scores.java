@@ -9,7 +9,12 @@ import static com.tom_e_white.mastermind.Scores.Score.WHITE;
 
 public class Scores {
 
-    public enum Score { RED, WHITE, NONE }
+    public enum Score {
+        RED,
+        WHITE,
+        NONE, // neither RED nor WHITE - i.e. wrong colour
+        IGNORE // ignore for the purposes of scoring
+    }
 
     public static class ScoreDelta {
         int whiteDelta;
