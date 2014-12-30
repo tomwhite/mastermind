@@ -220,7 +220,9 @@ public class TestScores {
 
         Multiset<Scores.Score> score = Scores.score(secret, move);
 
-        store.impose(scoreConstraint(move, score));
+        PrimitiveConstraint constraint = scoreConstraint(move, score);
+        assertConstraint(constraint);
+        store.impose(constraint);
 
         if (moves.size() <= 1) {
             return;
@@ -285,6 +287,44 @@ public class TestScores {
         return new Or(constraints);
     }
 
+    // This ensures that we don't add a constraint that is false by failing immediately
+    private void assertConstraint(PrimitiveConstraint c) {
+        assertTrue(c.toString(), constraintToExpr(c));
+    }
+
+    private boolean constraintToExpr(PrimitiveConstraint c) {
+        if (c instanceof XeqC) {
+            IntVar x = ((XeqC) c).x;
+            int i = 0;
+            for (IntVar var : v) {
+                if (x == var) {
+                    return secret.get(i) == ((XeqC) c).c;
+                }
+                i++;
+            }
+            fail("Illegal");
+        }
+        if (c instanceof Not) {
+            return !constraintToExpr(((Not) c).c);
+        }
+        if (c instanceof Or) {
+            boolean ret = false;
+            for (PrimitiveConstraint pc : ((Or) c).listOfC) {
+                ret |= constraintToExpr(pc);
+            }
+            return ret;
+        }
+        if (c instanceof And) {
+            boolean ret = true;
+            for (PrimitiveConstraint pc : ((And) c).listOfC) {
+                ret &= constraintToExpr(pc);
+            }
+            return ret;
+        }
+        fail("Illegal");
+        return false;
+    }
+
     private Set<Integer> diff(List<Integer> move1, List<Integer> move2) {
         Set<Integer> positions = Sets.newHashSet();
         for (int i = 0; i < 4; i++) {
@@ -318,6 +358,7 @@ public class TestScores {
         int rd = scoreDelta.getRedDelta();
         int wd = scoreDelta.getWhiteDelta();
 
+        PrimitiveConstraint constraint = null;
         if (wd == 0 && rd == 0) {
 //            store.impose(scoreConstraint(move2, HashMultiset.<Scores.Score>create(), diff));
 //        } else if (rd == 1 && wd == 0) {
@@ -325,11 +366,15 @@ public class TestScores {
 //        } else if (rd == -1 && wd == 0) {
 //            store.impose(scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED)), diff));
         } else if (wd == 1) {
-            store.impose(scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE)), diff));
+            constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE)), diff);
         } else if (wd == -1) {
-            store.impose(scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE)), diff));
+            constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE)), diff);
         }
 
+        if (constraint != null) {
+            assertConstraint(constraint);
+            store.impose(constraint);
+        }
     }
     public void reportScoreDeltaFor(List<Integer> move1, List<Integer> move2, int diffPos) {
         Set<Integer> diffPosNeg = Sets.newTreeSet(Sets.newHashSet(0, 1, 2, 3));
