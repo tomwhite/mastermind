@@ -227,10 +227,9 @@ public class TestScores {
         }
 
         for (List<Integer> previousMove : moves) {
-            int diffPos = diff(previousMove, move);
-            if (diffPos != -1) {
-                reportScoreDeltaFor(previousMove, move, diffPos);
-                //break; // TODO: remove this so we can check all moves edit dist 1 away
+            Set<Integer> diff = diff(previousMove, move);
+            if (diff.size() == 1) {
+                reportScoreDeltaFor(previousMove, move, Iterables.getOnlyElement(diff));
             }
         }
     }
@@ -276,18 +275,14 @@ public class TestScores {
         return new Or(constraints);
     }
 
-    private int diff(List<Integer> move1, List<Integer> move2) {
-        int diffPos = -1;
+    private Set<Integer> diff(List<Integer> move1, List<Integer> move2) {
+        Set<Integer> positions = Sets.newHashSet();
         for (int i = 0; i < 4; i++) {
             if (move1.get(i) != move2.get(i)) {
-                if (diffPos == -1) {
-                    diffPos = i;
-                } else {
-                    return -1; // more than one diff
-                }
+                positions.add(i);
             }
         }
-        return diffPos;
+        return positions;
     }
 
     private int dist(List<Integer> move1, List<Integer> move2) {
