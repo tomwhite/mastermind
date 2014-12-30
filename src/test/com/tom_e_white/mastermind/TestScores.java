@@ -366,6 +366,10 @@ public class TestScores {
                 constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, IGNORE)), diff);
             } else if (rd == -1) {
                 constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, IGNORE)), diff);
+            } else if (rd == 2) {
+                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, RED)), diff);
+            } else if (rd == -2) {
+                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, RED)), diff);
             }
         } else if (wd == 1) {
             constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE)), diff);
