@@ -16,6 +16,8 @@ import static org.junit.Assert.*;
 
 public class Game {
 
+    private static final int REPORT_NUM_SOLUTIONS = 6;
+
     private List<Integer> secret;
     private Store store;
     private IntVar[] v;
@@ -68,7 +70,7 @@ public class Game {
                 break;
             }
         }
-        int solutionsCount = countSolutions();
+        int solutionsCount = countSolutions(true);
         if (!hasWon()) {
             makeMove(search());
         }
@@ -130,7 +132,7 @@ public class Game {
                  (hasDistinctColours(move) ? 1 : 0);
     }
 
-    private int countSolutions() {
+    private int countSolutions(boolean verbose) {
         Search<IntVar> search = new DepthFirstSearch<IntVar>();
         SelectChoicePoint<IntVar> select =
                 new InputOrderSelect<IntVar>(store, v,
@@ -147,9 +149,9 @@ public class Game {
         if (numberOfSolutions == 0) {
             throw new IllegalStateException("Zero solutions for " + secret);
         }
-//        if (numberOfSolutions == 6) {
-//            reportGame(search);
-//        }
+        if (numberOfSolutions == REPORT_NUM_SOLUTIONS && verbose) {
+            reportGame(search);
+        }
 //        for (int i = 1; i <= numberOfSolutions; i++) {
 //            Domain[] solution = search.getSolutionListener().getSolution(i);
 //            for (int j = 0; j < solution.length; j++) {
@@ -180,7 +182,7 @@ public class Game {
         store.impose(constraint);
 
         if (moves.size() <= 1) {
-            return countSolutions();
+            return countSolutions(false);
         }
 
         for (List<Integer> previousMove : moves) {
@@ -193,7 +195,7 @@ public class Game {
                 reportScoreDeltaFor3(previousMove, move, diff);
             }
         }
-        return countSolutions();
+        return countSolutions(false);
     }
 
     private PrimitiveConstraint whiteConstraint(int colour, int pos) {
