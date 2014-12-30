@@ -230,6 +230,8 @@ public class TestScores {
             Set<Integer> diff = diff(previousMove, move);
             if (diff.size() == 1) {
                 reportScoreDeltaFor(previousMove, move, Iterables.getOnlyElement(diff));
+            } else if (diff.size() == 2) {
+                reportScoreDeltaFor(previousMove, move, diff);
             }
         }
     }
@@ -253,15 +255,22 @@ public class TestScores {
         return new Not(new XeqC(v[pos], colour));
     }
 
+    private Set<Integer> ALL_POS = Sets.newLinkedHashSet(Lists.newArrayList(0, 1, 2, 3));
+
     private PrimitiveConstraint scoreConstraint(List<Integer> move, Multiset<Scores.Score> score) {
-        while (score.size() < 4) {
+        return scoreConstraint(move, score, ALL_POS);
+    }
+
+    private PrimitiveConstraint scoreConstraint(List<Integer> move, Multiset<Scores.Score> score, Set<Integer> positions) {
+        while (score.size() < positions.size()) {
             score.add(NONE);
         }
         ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
         for (List<Scores.Score> combo : Scores.scoreCombinations(score)) {
             ArrayList<PrimitiveConstraint> moveConstraints = Lists.newArrayList();
-            for (int i = 0; i < combo.size(); i++) {
-                Scores.Score s = combo.get(i);
+            int offset = 0;
+            for (int i : positions) {
+                Scores.Score s = combo.get(offset);
                 if (s.equals(WHITE)) {
                     moveConstraints.add(whiteConstraint(move.get(i), i));
                 } else if (s.equals(RED)) {
@@ -269,6 +278,7 @@ public class TestScores {
                 } else if (s.equals(NONE)) {
                     moveConstraints.add(noneConstraint(move.get(i), i));
                 }
+                offset++;
             }
             constraints.add(new And(moveConstraints));
         }
@@ -299,7 +309,28 @@ public class TestScores {
         return Sets.newHashSet(move).size() == 4;
     }
 
+    public void reportScoreDeltaFor(List<Integer> move1, List<Integer> move2, Set<Integer> diff) {
+        Multiset<Scores.Score> score1 = Scores.score(secret, move1);
+        Multiset<Scores.Score> score2 = Scores.score(secret, move2);
 
+        Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
+
+        int rd = scoreDelta.getRedDelta();
+        int wd = scoreDelta.getWhiteDelta();
+
+        if (wd == 0 && rd == 0) {
+//            store.impose(scoreConstraint(move2, HashMultiset.<Scores.Score>create(), diff));
+//        } else if (rd == 1 && wd == 0) {
+//            store.impose(scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED)), diff));
+//        } else if (rd == -1 && wd == 0) {
+//            store.impose(scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED)), diff));
+        } else if (wd == 1) {
+            store.impose(scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE)), diff));
+        } else if (wd == -1) {
+            store.impose(scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE)), diff));
+        }
+
+    }
     public void reportScoreDeltaFor(List<Integer> move1, List<Integer> move2, int diffPos) {
         Set<Integer> diffPosNeg = Sets.newTreeSet(Sets.newHashSet(0, 1, 2, 3));
         diffPosNeg.remove(diffPos);
