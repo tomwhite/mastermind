@@ -62,28 +62,4 @@ public class TestScores {
         return s;
     }
 
-    @Test
-    public void testScoreDeltaFor() {
-        Multiset<Integer> hist = HashMultiset.create();
-        for (int i = 0; i < 6; i++) {
-            for (int j = 0; j < 6; j++) {
-                for (int k = 0; k < 6; k++) {
-                    for (int l = 0; l < 6; l++) {
-                        List<Integer> secret = move(i, j, k, l);
-                        Game game = new Game(secret);
-                        hist.add(game.playGame(new ComputerScorer(secret)).getSolutionsCount());
-                    }
-                }
-            }
-        }
-        System.out.println("Histogram:");
-        hist = Multisets.copyHighestCountFirst(hist);
-        System.out.println(hist);
-        double total = 0;
-        for (Integer i : hist.elementSet()) {
-            total += (hist.count(i) * 1.0) / i;
-        }
-        System.out.println("Total: " + total + ", " + (100*total/1296) + "%");
-    }
-
 }
