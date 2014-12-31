@@ -177,9 +177,7 @@ public class Game {
         Multiset<Scores.Score> score = scorer.score(move);
         scores.put(move, score);
 
-        PrimitiveConstraint constraint = scoreConstraint(move, score);
-        assertConstraint(constraint);
-        store.impose(constraint);
+        impose(scoreConstraint(move, score));
 
         if (moves.size() <= 1) {
             return countSolutions(false);
@@ -196,6 +194,11 @@ public class Game {
             }
         }
         return countSolutions(false);
+    }
+
+    private void impose(PrimitiveConstraint constraint) {
+        assertConstraint(constraint);
+        store.impose(constraint);
     }
 
     private PrimitiveConstraint whiteConstraint(int colour, int pos) {
@@ -351,8 +354,7 @@ public class Game {
         }
 
         if (constraint != null) {
-            assertConstraint(constraint);
-            store.impose(constraint);
+            impose(constraint);
         }
     }
 
@@ -399,8 +401,7 @@ public class Game {
         }
 
         if (constraint != null) {
-            assertConstraint(constraint);
-            store.impose(constraint);
+            impose(constraint);
         }
     }
 
@@ -461,7 +462,7 @@ public class Game {
         if (secret != null) {
             assertEquals(colour + " appears in pos " + pos, (long) secret.get(pos), colour);
         }
-        store.impose(new XeqC(v[pos], colour));
+        impose(new XeqC(v[pos], colour));
         //System.out.println("TODO: no need to mutate " + pos + " again");
     }
 
@@ -470,12 +471,12 @@ public class Game {
         if (secret != null) {
             assertFalse(colour + " does not appear in " + pos, secret.get(pos).equals(colour));
         }
-        store.impose(new Not(new XeqC(v[pos], colour)));
+        impose(new Not(new XeqC(v[pos], colour)));
     }
 
     void appearsIn(int colour, Set<Integer> positions) {
         //System.out.println(colour + " appears in one of pos " + positions);
-        store.impose(appearsInConstraint(colour, positions));
+        impose(appearsInConstraint(colour, positions));
         //System.out.println("TODO: we know " + colour + " appears so try it again (in one of " + positions + ")");
 
         if (secret != null) {
@@ -492,10 +493,10 @@ public class Game {
         if (secret != null) {
             assertFalse(colour + " does not appear anywhere", secret.contains(colour));
         }
-        store.impose(new Not(new XeqC(v[0], colour)));
-        store.impose(new Not(new XeqC(v[1], colour)));
-        store.impose(new Not(new XeqC(v[2], colour)));
-        store.impose(new Not(new XeqC(v[3], colour)));
+        impose(new Not(new XeqC(v[0], colour)));
+        impose(new Not(new XeqC(v[1], colour)));
+        impose(new Not(new XeqC(v[2], colour)));
+        impose(new Not(new XeqC(v[3], colour)));
         //System.out.println("TODO: no need to try " + colour + " again");
     }
 
@@ -512,7 +513,7 @@ public class Game {
         constraints.add(new Not(new XeqC(v[2], col2)));
         constraints.add(new Not(new XeqC(v[3], col2)));
 
-        store.impose(new Or(new And(constraints),
+        impose(new Or(new And(constraints),
                 new And(appearsInConstraint(col1, positions), appearsInConstraint(col2, positions))));
     }
 
