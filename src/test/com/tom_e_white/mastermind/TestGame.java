@@ -13,6 +13,7 @@ public class TestGame {
 
     @Test
     public void testAllGames() {
+        int numLost = 0;
         Multiset<Integer> hist = HashMultiset.create();
         for (int i = 0; i < 6; i++) {
             for (int j = 0; j < 6; j++) {
@@ -20,7 +21,11 @@ public class TestGame {
                     for (int l = 0; l < 6; l++) {
                         List<Integer> secret = move(i, j, k, l);
                         Game game = new Game(secret);
-                        hist.add(game.playGame(new ComputerScorer(secret)).getSolutionsCount());
+                        Result result = game.playGame(new ComputerScorer(secret));
+                        hist.add(result.getSolutionsCount());
+                        if (!result.hasWon()) {
+                            numLost++;
+                        }
                     }
                 }
             }
@@ -33,6 +38,7 @@ public class TestGame {
             total += (hist.count(i) * 1.0) / i;
         }
         System.out.println("Total: " + total + ", " + (100*total/1296) + "%");
+        System.out.println("Lost: " + numLost);
     }
 
 }

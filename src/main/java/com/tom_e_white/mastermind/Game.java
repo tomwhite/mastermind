@@ -16,7 +16,7 @@ import static org.junit.Assert.*;
 
 public class Game {
 
-    private static final int REPORT_NUM_SOLUTIONS = 3;
+    private static final int REPORT_NUM_SOLUTIONS = 2;
 
     private List<Integer> secret;
     private Store store;
@@ -34,8 +34,6 @@ public class Game {
     }
 
     public Result playGame(Scorer scorer) {
-        //System.out.println("New Game");
-
         moves = Lists.newArrayList();
         scores = Maps.newHashMap();
         this.scorer = scorer;
@@ -44,13 +42,6 @@ public class Game {
         for (int i = 0; i < v.length; i++) {
             v[i] = new IntVar(store, "v" + i, 0, 5);
         }
-
-        // TODO: don't just go one step from 0123 - how to improve walk through?
-        // TODO: choose colours to change based on how much info they gave in earlier mutations?
-        // TODO: or use constraints in order to guide next move somehow?
-        //      e.g. at each step look for a move that is edit-distance 1 from a previous one, and that has
-        //      different colours
-        // TODO: or, if first move is 1 red or less, then switch numbers (don't use as many 2s or 3s)
 
         List<List<Integer>> staticMoves = Lists.newArrayList(
                 move(0, 1, 2, 3),
@@ -95,9 +86,6 @@ public class Game {
         boolean result = search.labeling(store, select);
 
         List<Integer> solution = Lists.newArrayList();
-        // TODO: look for a solution that is close to others in set (not previous moves)
-        // TODO: or, for first search try to start with a move that is different to previous ones
-        // (doesn't repeat colours in positions that have been tried before) - i.e. aim to get some whites
         int numberOfSolutions = search.getSolutionListener().solutionsNo();
         for (int i = 1; i <= numberOfSolutions; i++) {
             solution.clear();
@@ -108,8 +96,6 @@ public class Game {
             if (moves.contains(solution)) {
                 continue;
             }
-            //System.out.println("Min dist: " + minDist(solution));
-            //System.out.println("Distinct?: " + hasDistinctColours(solution));
             break; // just return first to start with (unless already played it)
         }
         assertEquals(4, solution.size());
@@ -152,13 +138,6 @@ public class Game {
         if (numberOfSolutions == REPORT_NUM_SOLUTIONS && verbose) {
             reportGame(search);
         }
-//        for (int i = 1; i <= numberOfSolutions; i++) {
-//            Domain[] solution = search.getSolutionListener().getSolution(i);
-//            for (int j = 0; j < solution.length; j++) {
-//                System.out.print(solution[j]);
-//            }
-//            System.out.println();
-//        }
         return numberOfSolutions;
     }
 
@@ -171,7 +150,6 @@ public class Game {
     }
 
     private int makeMove(List<Integer> move) {
-        //System.out.println("Move: " + move);
         moves.add(move);
 
         Multiset<Scores.Score> score = scorer.score(move);
@@ -185,17 +163,23 @@ public class Game {
 
         for (List<Integer> previousMove : moves) {
             Set<Integer> diff = diff(previousMove, move);
+//            System.out.println(secret);
+//            System.out.println(previousMove + "; " + scores.get(previousMove));
+//            System.out.println(move + "; " + scores.get(move));
             if (diff.size() == 1) {
-                reportScoreDeltaFor(previousMove, move, Iterables.getOnlyElement(diff));
+                imposeDiff1Constraints(previousMove, move, Iterables.getOnlyElement(diff));
             } else if (diff.size() == 2) {
-                reportScoreDeltaFor(previousMove, move, diff);
+                imposeDiff2Constraints(previousMove, move, diff);
             } else if (diff.size() == 3) {
-                reportScoreDeltaFor3(previousMove, move, diff);
+                imposeDiff3Constraints(previousMove, move, diff);
             }
         }
         return countSolutions(false);
     }
 
+    /**
+     * Impose a constraint.
+     */
     private void impose(PrimitiveConstraint constraint) {
         assertConstraint(constraint);
         store.impose(constraint);
@@ -242,10 +226,16 @@ public class Game {
 
     private Set<Integer> ALL_POS = Sets.newLinkedHashSet(Lists.newArrayList(0, 1, 2, 3));
 
+    /**
+     * A constraint for a normal move.
+     */
     private PrimitiveConstraint scoreConstraint(List<Integer> move, Multiset<Scores.Score> score) {
         return scoreConstraint(move, score, ALL_POS);
     }
 
+    /**
+     * A constraint for a subset of the positions in a move.
+     */
     private PrimitiveConstraint scoreConstraint(List<Integer> move, Multiset<Scores.Score> score, Set<Integer> positions) {
         while (score.size() < positions.size()) {
             score.add(NONE);
@@ -270,7 +260,9 @@ public class Game {
         return new Or(constraints);
     }
 
-    // This ensures that we don't add a constraint that is false by failing immediately
+    /**
+     * This ensures that we don't add a constraint that is false by failing immediately
+     */
     private void assertConstraint(PrimitiveConstraint c) {
         if (secret == null) {
             return;
@@ -335,104 +327,11 @@ public class Game {
         return Sets.newHashSet(move).size() == 4;
     }
 
-    private void reportScoreDeltaFor(List<Integer> move1, List<Integer> move2, Set<Integer> diff) {
+    private void imposeDiff1Constraints(List<Integer> move1, List<Integer> move2, int diffPos) {
         Multiset<Scores.Score> score1 = scores.get(move1);
         Multiset<Scores.Score> score2 = scores.get(move2);
 
         Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
-
-        int rd = scoreDelta.getRedDelta();
-        int wd = scoreDelta.getWhiteDelta();
-
-//        System.out.println(secret);
-//        System.out.println(move1 + "; " + score1);
-//        System.out.println(move2 + "; " + score2);
-
-        PrimitiveConstraint constraint = null;
-        if (wd == 0) {
-            // TODO: this is not strictly correct, consider the following where RED is not pos 0=3 or 3=2
-            // [3, 5, 5, 0]
-            // [2, 5, 0, 0]; [WHITE x 2]
-            // [3, 5, 0, 2]; [RED, WHITE x 2]
-//            if (rd == 1) {
-//                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, IGNORE)), diff);
-//            } else if (rd == -1) {
-//                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, IGNORE)), diff);
-//            } else if (rd == 2) {
-//                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, RED)), diff);
-//            } else if (rd == -2) {
-//                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, RED)), diff);
-//            }
-        } else if (wd == 1) {
-            constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE)), diff);
-        } else if (wd == -1) {
-            constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE)), diff);
-        } else if (wd == 2) {
-            constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff);
-        } else if (wd == -2) {
-            constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff);
-        }
-
-        if (constraint != null) {
-            impose(constraint);
-        }
-    }
-
-    private void reportScoreDeltaFor3(List<Integer> move1, List<Integer> move2, Set<Integer> diff) {
-        Multiset<Scores.Score> score1 = scores.get(move1);
-        Multiset<Scores.Score> score2 = scores.get(move2);
-
-        Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
-
-        int rd = scoreDelta.getRedDelta();
-        int wd = scoreDelta.getWhiteDelta();
-
-//        System.out.println(secret);
-//        System.out.println(move1 + "; " + score1);
-//        System.out.println(move2 + "; " + score2);
-
-        PrimitiveConstraint constraint = null;
-        if (wd == 0) {
-            if (rd == 1) {
-                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, IGNORE, IGNORE)), diff);
-            } else if (rd == -1) {
-                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, IGNORE, IGNORE)), diff);
-            } else if (rd == 2) {
-                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, RED, IGNORE)), diff);
-            } else if (rd == -2) {
-                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, RED, IGNORE)), diff);
-            } else if (rd == 3) {
-                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, RED, RED)), diff);
-            } else if (rd == -3) {
-                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, RED, RED)), diff);
-            }
-        } else if (wd == 1) {
-            constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, IGNORE)), diff);
-        } else if (wd == -1) {
-            constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, IGNORE)), diff);
-        } else if (wd == 2) {
-            constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff);
-        } else if (wd == -2) {
-            constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff);
-        } else if (wd == 3) {
-            constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, WHITE, WHITE)), diff);
-        } else if (wd == -3) {
-            constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, WHITE, WHITE)), diff);
-        }
-
-        if (constraint != null) {
-            impose(constraint);
-        }
-    }
-
-    private void reportScoreDeltaFor(List<Integer> move1, List<Integer> move2, int diffPos) {
-        Multiset<Scores.Score> score1 = scores.get(move1);
-        Multiset<Scores.Score> score2 = scores.get(move2);
-
-        Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
-//        System.out.println(secret);
-//        System.out.println(move1 + "; " + score1);
-//        System.out.println(move2 + "; " + score2);
         int rd = scoreDelta.getRedDelta();
         int wd = scoreDelta.getWhiteDelta();
         int oldCol = move1.get(diffPos);
@@ -475,7 +374,88 @@ public class Game {
                 }
             }
         }
-        //System.out.println();
+    }
+
+    private void imposeDiff2Constraints(List<Integer> move1, List<Integer> move2, Set<Integer> diff) {
+        Multiset<Scores.Score> score1 = scores.get(move1);
+        Multiset<Scores.Score> score2 = scores.get(move2);
+
+        Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
+
+        int rd = scoreDelta.getRedDelta();
+        int wd = scoreDelta.getWhiteDelta();
+
+        PrimitiveConstraint constraint = null;
+        if (wd == 0) {
+            // TODO: this is not strictly correct, consider the following where RED is not pos 0=3 or 3=2
+            // [3, 5, 5, 0]
+            // [2, 5, 0, 0]; [WHITE x 2]
+            // [3, 5, 0, 2]; [RED, WHITE x 2]
+//            if (rd == 1) {
+//                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, IGNORE)), diff);
+//            } else if (rd == -1) {
+//                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, IGNORE)), diff);
+//            } else if (rd == 2) {
+//                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, RED)), diff);
+//            } else if (rd == -2) {
+//                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, RED)), diff);
+//            }
+        } else if (wd == 1) {
+            constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE)), diff);
+        } else if (wd == -1) {
+            constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE)), diff);
+        } else if (wd == 2) {
+            constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff);
+        } else if (wd == -2) {
+            constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff);
+        }
+
+        if (constraint != null) {
+            impose(constraint);
+        }
+    }
+
+    private void imposeDiff3Constraints(List<Integer> move1, List<Integer> move2, Set<Integer> diff) {
+        Multiset<Scores.Score> score1 = scores.get(move1);
+        Multiset<Scores.Score> score2 = scores.get(move2);
+
+        Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
+
+        int rd = scoreDelta.getRedDelta();
+        int wd = scoreDelta.getWhiteDelta();
+
+        PrimitiveConstraint constraint = null;
+        if (wd == 0) {
+            if (rd == 1) {
+                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, IGNORE, IGNORE)), diff);
+            } else if (rd == -1) {
+                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, IGNORE, IGNORE)), diff);
+            } else if (rd == 2) {
+                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, RED, IGNORE)), diff);
+            } else if (rd == -2) {
+                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, RED, IGNORE)), diff);
+            } else if (rd == 3) {
+                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, RED, RED)), diff);
+            } else if (rd == -3) {
+                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, RED, RED)), diff);
+            }
+        } else if (wd == 1) {
+            constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, IGNORE)), diff);
+        } else if (wd == -1) {
+            constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, IGNORE)), diff);
+        } else if (wd == 2) {
+            constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff);
+        } else if (wd == -2) {
+            constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff);
+        } else if (wd == 3) {
+            constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, WHITE, WHITE)), diff);
+        } else if (wd == -3) {
+            constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, WHITE, WHITE)), diff);
+        }
+
+        if (constraint != null) {
+            impose(constraint);
+        }
     }
 
     public static void main(String[] args) throws IOException {
