@@ -55,7 +55,7 @@ public class Game {
         List<List<Integer>> staticMoves = Lists.newArrayList(
                 move(0, 1, 2, 3),
                 move(4, 1, 2, 3),
-                move(4, 5, 2, 3),
+                move(4, 5, 2, 3), // TODO: or 0, 5, 2, 3 if first was better than second?
                 move(4, 5, 0, 3)
         );
         int moveCount = 0;
@@ -210,7 +210,7 @@ public class Game {
             }
             constraints.add(new XeqC(v[i], colour));
         }
-        return new Or(constraints);
+        return new And(noneConstraint(colour, pos), new Or(constraints));
     }
 
     private PrimitiveConstraint noneConstraint(int colour, int pos) {
@@ -331,15 +331,15 @@ public class Game {
             // [3, 5, 5, 0]
             // [2, 5, 0, 0]; [WHITE x 2]
             // [3, 5, 0, 2]; [RED, WHITE x 2]
-            if (rd == 1) {
-                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, IGNORE)), diff);
-            } else if (rd == -1) {
-                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, IGNORE)), diff);
-            } else if (rd == 2) {
-                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, RED)), diff);
-            } else if (rd == -2) {
-                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, RED)), diff);
-            }
+//            if (rd == 1) {
+//                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, IGNORE)), diff);
+//            } else if (rd == -1) {
+//                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, IGNORE)), diff);
+//            } else if (rd == 2) {
+//                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, RED)), diff);
+//            } else if (rd == -2) {
+//                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, RED)), diff);
+//            }
         } else if (wd == 1) {
             constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE)), diff);
         } else if (wd == -1) {
