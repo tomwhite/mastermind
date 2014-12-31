@@ -1,12 +1,26 @@
 package com.tom_e_white.mastermind;
 
+import com.google.common.collect.Multiset;
+
+import java.util.List;
+import java.util.Map;
+
 public class Result {
     private int solutionsCount;
     private boolean won;
+    private List<List<Integer>> moves;
+    private Map<List<Integer>, Multiset<Scores.Score>> scores;
 
     public Result(int solutionsCount, boolean won) {
         this.solutionsCount = solutionsCount;
         this.won = won;
+    }
+
+    public Result(int solutionsCount, boolean won, List<List<Integer>> moves, Map<List<Integer>, Multiset<Scores.Score>> scores) {
+        this.solutionsCount = solutionsCount;
+        this.won = won;
+        this.moves = moves;
+        this.scores = scores;
     }
 
     public int getSolutionsCount() {
@@ -15,5 +29,13 @@ public class Result {
 
     public boolean hasWon() {
         return won;
+    }
+
+    public List<List<Integer>> getMoves() {
+        return moves;
+    }
+
+    public Map<List<Integer>, Multiset<Scores.Score>> getScores() {
+        return scores;
     }
 }

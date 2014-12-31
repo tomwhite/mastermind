@@ -65,7 +65,7 @@ public class Game {
         if (!hasWon()) {
             makeMove(search());
         }
-        return new Result(solutionsCount, hasWon());
+        return new Result(solutionsCount, hasWon(), moves, scores);
     }
 
     private boolean hasWon() {
