@@ -16,7 +16,7 @@ import static org.junit.Assert.*;
 
 public class Game {
 
-    private static final int REPORT_NUM_SOLUTIONS = 6;
+    private static final int REPORT_NUM_SOLUTIONS = 3;
 
     private List<Integer> secret;
     private Store store;
@@ -423,6 +423,7 @@ public class Game {
             doesNotAppearIn(oldCol, diffPos);
             doesNotAppearIn(newCol, diffPos);
             if (rd == 0) {
+                // TODO: can investigate this better
                 if (hasDistinctColours(move1) && hasDistinctColours(move2)) {
                     eitherDontAppearAnywhereOrBothAppearIn(oldCol, newCol, diffPosNeg);
                 }
