@@ -449,8 +449,10 @@ public class Game {
                 }
             } else if (rd == 1) {
                 impose(redConstraint(newCol, diffPos));
+                impose(noneConstraint(oldCol));
             } else if (rd == -1) {
                 impose(redConstraint(oldCol, diffPos));
+                impose(noneConstraint(newCol));
             }
         } else if (wd == 1) {
             impose(whiteConstraint(newCol, diffPos));
