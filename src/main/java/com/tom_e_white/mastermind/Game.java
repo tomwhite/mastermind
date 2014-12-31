@@ -201,10 +201,16 @@ public class Game {
         store.impose(constraint);
     }
 
+    /**
+     * Colour appears in given position
+     */
     private PrimitiveConstraint whiteConstraint(int colour, int pos) {
         return new XeqC(v[pos], colour);
     }
 
+    /**
+     * Colour does not appear in given position but does appear in another position
+     */
     private PrimitiveConstraint redConstraint(int colour, int pos) {
         ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
         for (int i = 0; i < 4; i++) {
@@ -216,8 +222,22 @@ public class Game {
         return new And(noneConstraint(colour, pos), new Or(constraints));
     }
 
+    /**
+     * Colour does not appear in given position
+     */
     private PrimitiveConstraint noneConstraint(int colour, int pos) {
         return new Not(new XeqC(v[pos], colour));
+    }
+
+    /**
+     * Colour does not appear in any position
+     */
+    private PrimitiveConstraint noneConstraint(int colour) {
+        ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
+        for (int i = 0; i < 4; i++) {
+            constraints.add(noneConstraint(colour, i));
+        }
+        return new And(constraints);
     }
 
     private Set<Integer> ALL_POS = Sets.newLinkedHashSet(Lists.newArrayList(0, 1, 2, 3));
@@ -406,9 +426,6 @@ public class Game {
     }
 
     private void reportScoreDeltaFor(List<Integer> move1, List<Integer> move2, int diffPos) {
-        Set<Integer> diffPosNeg = Sets.newTreeSet(Sets.newHashSet(0, 1, 2, 3));
-        diffPosNeg.remove(diffPos);
-
         Multiset<Scores.Score> score1 = scores.get(move1);
         Multiset<Scores.Score> score2 = scores.get(move2);
 
@@ -421,110 +438,42 @@ public class Game {
         int oldCol = move1.get(diffPos);
         int newCol = move2.get(diffPos);
         if (wd == 0) {
-            doesNotAppearIn(oldCol, diffPos);
-            doesNotAppearIn(newCol, diffPos);
+            impose(noneConstraint(oldCol, diffPos)); // oldCol does not appear in diffPos
+            impose(noneConstraint(newCol, diffPos)); // newCol does not appear in diffPos
             if (rd == 0) {
                 // TODO: can investigate this better
                 if (hasDistinctColours(move1) && hasDistinctColours(move2)) {
-                    eitherDontAppearAnywhereOrBothAppearIn(oldCol, newCol, diffPosNeg);
+                    // either oldCol and newCol don't appear anywhere, or they are both reds in diffPos
+                    PrimitiveConstraint c = new And(noneConstraint(oldCol), noneConstraint(newCol));
+                    impose(new Or(new And(redConstraint(oldCol, diffPos), redConstraint(newCol, diffPos)), c));
                 }
             } else if (rd == 1) {
-                appearsIn(newCol, diffPosNeg);
+                impose(redConstraint(newCol, diffPos));
             } else if (rd == -1) {
-                appearsIn(oldCol, diffPosNeg);
+                impose(redConstraint(oldCol, diffPos));
             }
         } else if (wd == 1) {
-            appearsIn(newCol, diffPos);
-            doesNotAppearIn(oldCol, diffPos);
+            impose(whiteConstraint(newCol, diffPos));
+            impose(noneConstraint(oldCol, diffPos));
             if (hasDistinctColours(move1) && hasDistinctColours(move2)) {
                 if (rd == 0) {
-                    doesNotAppearAnywhere(oldCol);
+                    impose(noneConstraint(oldCol));
                 } else if (rd == -1) {
-                    appearsIn(oldCol, diffPosNeg);
+                    impose(redConstraint(oldCol, diffPos));
                 }
             }
         } else if (wd == -1) {
-            appearsIn(oldCol, diffPos);
-            doesNotAppearIn(newCol, diffPos);
+            impose(whiteConstraint(oldCol, diffPos));
+            impose(noneConstraint(newCol, diffPos));
             if (hasDistinctColours(move1) && hasDistinctColours(move2)) {
                 if (rd == 0) {
-                    doesNotAppearAnywhere(newCol);
+                    impose(noneConstraint(newCol));
                 } else if (rd == 1) {
-                    appearsIn(newCol, diffPosNeg);
+                    impose(redConstraint(newCol, diffPos));
                 }
             }
         }
         //System.out.println();
-    }
-
-    void appearsIn(int colour, int pos) {
-        //System.out.println(colour + " appears in pos " + pos);
-        if (secret != null) {
-            assertEquals(colour + " appears in pos " + pos, (long) secret.get(pos), colour);
-        }
-        impose(new XeqC(v[pos], colour));
-        //System.out.println("TODO: no need to mutate " + pos + " again");
-    }
-
-    void doesNotAppearIn(int colour, int pos) {
-        //System.out.println(colour + " does not appear in " + pos);
-        if (secret != null) {
-            assertFalse(colour + " does not appear in " + pos, secret.get(pos).equals(colour));
-        }
-        impose(new Not(new XeqC(v[pos], colour)));
-    }
-
-    void appearsIn(int colour, Set<Integer> positions) {
-        //System.out.println(colour + " appears in one of pos " + positions);
-        impose(appearsInConstraint(colour, positions));
-        //System.out.println("TODO: we know " + colour + " appears so try it again (in one of " + positions + ")");
-
-        if (secret != null) {
-            boolean contains = false;
-            for (int i : positions) {
-                contains = contains || secret.get(i).equals(colour);
-            }
-            assertTrue(colour + " appears in one of pos " + positions, contains);
-        }
-    }
-
-    void doesNotAppearAnywhere(int colour) {
-        //System.out.println(colour + " does not appear anywhere");
-        if (secret != null) {
-            assertFalse(colour + " does not appear anywhere", secret.contains(colour));
-        }
-        impose(new Not(new XeqC(v[0], colour)));
-        impose(new Not(new XeqC(v[1], colour)));
-        impose(new Not(new XeqC(v[2], colour)));
-        impose(new Not(new XeqC(v[3], colour)));
-        //System.out.println("TODO: no need to try " + colour + " again");
-    }
-
-    void eitherDontAppearAnywhereOrBothAppearIn(int col1, int col2, Set<Integer> positions) {
-        //System.out.println("EITHER " + col1 + " and " + col2 + " don't appear anywhere OR " + col1 + " and " + col2 + " both appear in pos " + positions);
-
-        ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
-        constraints.add(new Not(new XeqC(v[0], col1)));
-        constraints.add(new Not(new XeqC(v[1], col1)));
-        constraints.add(new Not(new XeqC(v[2], col1)));
-        constraints.add(new Not(new XeqC(v[3], col1)));
-        constraints.add(new Not(new XeqC(v[0], col2)));
-        constraints.add(new Not(new XeqC(v[1], col2)));
-        constraints.add(new Not(new XeqC(v[2], col2)));
-        constraints.add(new Not(new XeqC(v[3], col2)));
-
-        impose(new Or(new And(constraints),
-                new And(appearsInConstraint(col1, positions), appearsInConstraint(col2, positions))));
-    }
-
-    ////
-
-    PrimitiveConstraint appearsInConstraint(int colour, Set<Integer> positions) {
-        ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
-        for (int i : positions) {
-            constraints.add(new XeqC(v[i], colour));
-        }
-        return new Or(constraints);
     }
 
     public static void main(String[] args) throws IOException {
