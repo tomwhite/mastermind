@@ -47,7 +47,7 @@ public class Game {
         List<List<Integer>> staticMoves = Lists.newArrayList(
                 move(0, 1, 2, 3),
                 move(4, 1, 2, 3),
-                move(4, 5, 2, 3), // TODO: or 0, 5, 2, 3 if first was better than second?
+                move(4, 5, 2, 3),
                 move(4, 5, 0, 3)
         );
         int moveCount = 0;
@@ -436,7 +436,7 @@ public class Game {
             
             // if no reds and white gone from 2 to 3, then we know that two non-white pegs don't appear in either of the
             // two non-white positions
-            // TODO: generalize this logic
+            // TODO: generalize this logic - e.g. if no reds, then you can constrain non-white positions strongly
             int wc1 = score1.count(WHITE);
             int wc2 = score2.count(WHITE);
             int rc1 = score1.count(RED);
