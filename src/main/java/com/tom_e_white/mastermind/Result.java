@@ -9,14 +9,14 @@ public class Result {
     private int solutionsCount;
     private boolean won;
     private List<List<Integer>> moves;
-    private Map<List<Integer>, Multiset<Scores.Score>> scores;
+    private List<Multiset<Scores.Score>> scores;
 
     public Result(int solutionsCount, boolean won) {
         this.solutionsCount = solutionsCount;
         this.won = won;
     }
 
-    public Result(int solutionsCount, boolean won, List<List<Integer>> moves, Map<List<Integer>, Multiset<Scores.Score>> scores) {
+    public Result(int solutionsCount, boolean won, List<List<Integer>> moves, List<Multiset<Scores.Score>> scores) {
         this.solutionsCount = solutionsCount;
         this.won = won;
         this.moves = moves;
@@ -35,7 +35,7 @@ public class Result {
         return moves;
     }
 
-    public Map<List<Integer>, Multiset<Scores.Score>> getScores() {
+    public List<Multiset<Scores.Score>> getScores() {
         return scores;
     }
 }

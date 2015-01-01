@@ -65,7 +65,11 @@ public class Game {
         if (!hasWon()) {
             makeMove(search());
         }
-        return new Result(solutionsCount, hasWon(), moves, scores);
+        List<Multiset<Scores.Score>> scoresList = Lists.newArrayList();
+        for (List<Integer> move : moves) {
+            scoresList.add(scores.get(move));
+        }
+        return new Result(solutionsCount, hasWon(), moves, scoresList);
     }
 
     private boolean hasWon() {
