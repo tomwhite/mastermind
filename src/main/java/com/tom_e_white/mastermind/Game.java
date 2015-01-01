@@ -382,32 +382,31 @@ public class Game {
 
         Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
 
+        int rc1 = score1.count(RED);
+        int rc2 = score2.count(RED);
         int wd = scoreDelta.getWhiteDelta();
 
-        if (wd == 1) {
-            impose(scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE)), diff));
-            
-            // if no reds and white gone from 2 to 3, then we know that two non-white pegs don't appear in either of the
-            // two non-white positions
-            // TODO: generalize this logic - e.g. if no reds, then you can constrain non-white positions strongly
-            int wc1 = score1.count(WHITE);
-            int wc2 = score2.count(WHITE);
-            int rc1 = score1.count(RED);
-            int rc2 = score2.count(RED);
-            if (wc1 == 2 && wc2 == 3 && rc1 == 0 && rc2 == 0) {
+        // if number of whites changes (with no reds), then we know that two non-white pegs don't appear in either of the
+        // two non-white positions
+        // e.g. for the following we know that 5 and 3 don't appear in positions 1 and 3
+        // [4, 5, 2, 3]; [WHITE x 2, NONE x 2]
+        // [4, 0, 2, 0]; [WHITE x 3, NONE]
+        if (rc1 == 0 && rc2 == 0) {
+            if (wd > 0) {
                 for (int i : diff) {
                     int col = move1.get(i);
                     for (int j : diff) {
                         impose(noneConstraint(col, j));
                     }
                 }
+            } else if (wd < 0) {
+                for (int i : diff) {
+                    int col = move2.get(i);
+                    for (int j : diff) {
+                        impose(noneConstraint(col, j));
+                    }
+                }
             }
-        } else if (wd == -1) {
-            impose(scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE)), diff));
-        } else if (wd == 2) {
-            impose(scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff));
-        } else if (wd == -2) {
-            impose(scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff));
         }
     }
 
@@ -422,13 +421,11 @@ public class Game {
             Set<Integer> cols1 = colourSet(move1);
             Set<Integer> cols2 = colourSet(move2);
             if (cols1.containsAll(cols2)) {
-                Set<Integer> diff = Sets.difference(cols1, cols2);
-                for (int col : diff) {
+                for (int col : Sets.difference(cols1, cols2)) {
                     impose(noneConstraint(col));
                 }
             } else if (cols2.containsAll(cols1)) {
-                Set<Integer> diff = Sets.difference(cols2, cols1);
-                for (int col : diff) {
+                for (int col : Sets.difference(cols2, cols1)) {
                     impose(noneConstraint(col));
                 }
 
