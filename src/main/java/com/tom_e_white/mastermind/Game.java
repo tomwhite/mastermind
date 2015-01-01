@@ -21,7 +21,7 @@ public class Game {
 
     private List<Integer> secret;
     private Store store;
-    private IntVar[] v;
+    private IntVar[] pegs;
 
     private Scorer scorer;
     private List<List<Integer>> moves;
@@ -39,9 +39,9 @@ public class Game {
         scores = Maps.newHashMap();
         this.scorer = scorer;
         store = new Store();
-        v = new IntVar[4];
-        for (int i = 0; i < v.length; i++) {
-            v[i] = new IntVar(store, "v" + i, 0, 5);
+        pegs = new IntVar[4];
+        for (int i = 0; i < pegs.length; i++) {
+            pegs[i] = new IntVar(store, "peg" + i, 0, 5);
         }
 
         List<List<Integer>> staticMoves = Lists.newArrayList(
@@ -80,7 +80,7 @@ public class Game {
     private List<Integer> search() {
         Search<IntVar> search = new DepthFirstSearch<IntVar>();
         SelectChoicePoint<IntVar> select =
-                new InputOrderSelect<IntVar>(store, v,
+                new InputOrderSelect<IntVar>(store, pegs,
                         new IndomainMin<IntVar>());
 
         search.setAssignSolution(false); // don't assign variables after finding a solution, http://sourceforge.net/p/jacop-solver/discussion/1220992/thread/4caf2979/
@@ -110,7 +110,7 @@ public class Game {
     private int countSolutions(boolean verbose) {
         Search<IntVar> search = new DepthFirstSearch<IntVar>();
         SelectChoicePoint<IntVar> select =
-                new InputOrderSelect<IntVar>(store, v,
+                new InputOrderSelect<IntVar>(store, pegs,
                         new IndomainMin<IntVar>());
 
         search.setAssignSolution(false);
@@ -182,7 +182,7 @@ public class Game {
      * Colour appears in given position
      */
     private PrimitiveConstraint whiteConstraint(int colour, int pos) {
-        return new XeqC(v[pos], colour);
+        return new XeqC(pegs[pos], colour);
     }
 
     /**
@@ -194,7 +194,7 @@ public class Game {
             if (i == pos) {
                 continue;
             }
-            constraints.add(new XeqC(v[i], colour));
+            constraints.add(new XeqC(pegs[i], colour));
         }
         return new And(noneConstraint(colour, pos), new Or(constraints));
     }
@@ -208,7 +208,7 @@ public class Game {
             if (i == pos) {
                 continue;
             }
-            constraints.add(new XeqC(v[i], colour));
+            constraints.add(new XeqC(pegs[i], colour));
         }
         return new And(noneConstraint(colour, pos), new Or(constraints));
     }
@@ -217,7 +217,7 @@ public class Game {
      * Colour does not appear in given position
      */
     private PrimitiveConstraint noneConstraint(int colour, int pos) {
-        return new Not(new XeqC(v[pos], colour));
+        return new Not(new XeqC(pegs[pos], colour));
     }
 
     /**
@@ -289,8 +289,8 @@ public class Game {
         if (c instanceof XeqC) {
             IntVar x = ((XeqC) c).x;
             int i = 0;
-            for (IntVar var : v) {
-                if (x == var) {
+            for (IntVar peg : pegs) {
+                if (x == peg) {
                     return secret.get(i) == ((XeqC) c).c;
                 }
                 i++;
