@@ -25,7 +25,8 @@ The algorithm works as follows:
 * The remaining moves search the space of remaining solutions.
 * Each move and its associated score is used to constrain the solution space. For example...
 * Each move is compared to previous moves, and the _difference_ between it and each previous move is used to constrain
-the space further.
+the space further. The difference is looked at both with position being taken into account, as well as just by looking
+at the move as a set of colours (where order is ignored).
 
 Areas for improvement
 
