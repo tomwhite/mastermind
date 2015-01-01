@@ -18,6 +18,7 @@ public class Game {
 
     private static final int REPORT_NUM_SOLUTIONS = 2;
     private static final boolean VERBOSE = false;
+    private Set<Integer> ALL_POS = ImmutableSet.copyOf(Sets.newLinkedHashSet(Lists.newArrayList(0, 1, 2, 3)));
 
     private List<Integer> secret;
     private Store store;
@@ -34,6 +35,7 @@ public class Game {
         this.secret = secret;
     }
 
+    @SuppressWarnings("unchecked")
     public Result playGame(Scorer scorer) {
         moves = Lists.newArrayList();
         scores = Maps.newHashMap();
@@ -89,14 +91,17 @@ public class Game {
         search.setPrintInfo(false);
 
         boolean result = search.labeling(store, select);
+        if (!result) {
+            throw new IllegalStateException("No solutions found for " + secret);
+        }
 
         List<Integer> solution = Lists.newArrayList();
         int numberOfSolutions = search.getSolutionListener().solutionsNo();
         for (int i = 1; i <= numberOfSolutions; i++) {
             solution.clear();
             Domain[] sol = search.getSolutionListener().getSolution(i);
-            for (int j = 0; j < sol.length; j++) {
-                solution.add(sol[j].valueEnumeration().nextElement()); // convert domain to int
+            for (Domain d : sol) {
+                solution.add(d.valueEnumeration().nextElement()); // convert domain to int
             }
             if (moves.contains(solution)) {
                 continue;
@@ -119,11 +124,10 @@ public class Game {
         search.setPrintInfo(false);
 
         boolean result = search.labeling(store, select);
-
-        int numberOfSolutions = search.getSolutionListener().solutionsNo();
-        if (numberOfSolutions == 0) {
-            throw new IllegalStateException("Zero solutions for " + secret);
+        if (!result) {
+            throw new IllegalStateException("No solutions found for " + secret);
         }
+        int numberOfSolutions = search.getSolutionListener().solutionsNo();
         if (numberOfSolutions == REPORT_NUM_SOLUTIONS && verbose) {
             reportGame(search);
         }
@@ -148,20 +152,7 @@ public class Game {
 
         if (moves.size() > 1) {
             for (List<Integer> previousMove : moves) {
-                Set<Integer> diff = diff(previousMove, move);
-                if (VERBOSE) {
-                    System.out.println(secret);
-                    System.out.println(previousMove + "; " + scores.get(previousMove));
-                    System.out.println(move + "; " + scores.get(move));
-                }
-                if (diff.size() == 1) {
-                    imposeDiff1Constraints(previousMove, move, Iterables.getOnlyElement(diff));
-                } else if (diff.size() == 2) {
-                    imposeDiff2Constraints(previousMove, move, diff);
-                } else if (diff.size() == 3) {
-                    imposeDiff3Constraints(previousMove, move, diff);
-                }
-
+                imposeDiffConstraints(previousMove, move);
                 imposeColourConstraints(previousMove, move);
             }
         }
@@ -187,14 +178,7 @@ public class Game {
      * Colour does not appear in given position but does appear in another position
      */
     private PrimitiveConstraint redConstraint(int colour, int pos) {
-        ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
-        for (int i = 0; i < 4; i++) {
-            if (i == pos) {
-                continue;
-            }
-            constraints.add(new XeqC(pegs[i], colour));
-        }
-        return new And(noneConstraint(colour, pos), new Or(constraints));
+        return redConstraint(colour, pos, ALL_POS);
     }
 
     /**
@@ -223,13 +207,11 @@ public class Game {
      */
     private PrimitiveConstraint noneConstraint(int colour) {
         ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
-        for (int i = 0; i < 4; i++) {
+        for (int i : ALL_POS) {
             constraints.add(noneConstraint(colour, i));
         }
         return new And(constraints);
     }
-
-    private Set<Integer> ALL_POS = Sets.newLinkedHashSet(Lists.newArrayList(0, 1, 2, 3));
 
     /**
      * A constraint for a normal move.
@@ -318,8 +300,8 @@ public class Game {
 
     private Set<Integer> diff(List<Integer> move1, List<Integer> move2) {
         Set<Integer> positions = Sets.newHashSet();
-        for (int i = 0; i < 4; i++) {
-            if (move1.get(i) != move2.get(i)) {
+        for (int i : ALL_POS) {
+            if (!move1.get(i).equals(move2.get(i))) {
                 positions.add(i);
             }
         }
@@ -330,7 +312,24 @@ public class Game {
         return Sets.newHashSet(move).size() == 4;
     }
 
-    private void imposeDiff1Constraints(List<Integer> move1, List<Integer> move2, int diffPos) {
+    private void imposeDiffConstraints(List<Integer> move1, List<Integer> move2) {
+        Set<Integer> diff = diff(move1, move2);
+        if (VERBOSE) {
+            System.out.println(secret);
+            System.out.println(move1 + "; " + scores.get(move1));
+            System.out.println(move2 + "; " + scores.get(move2));
+        }
+        if (diff.size() == 1) {
+            imposeDiff1Constraints(move1, move2, diff);
+        } else if (diff.size() == 2) {
+            imposeDiff2Constraints(move1, move2, diff);
+        } else if (diff.size() == 3) {
+            imposeDiff3Constraints(move1, move2, diff);
+        }
+    }
+    private void imposeDiff1Constraints(List<Integer> move1, List<Integer> move2, Set<Integer> diff) {
+        int diffPos = Iterables.getOnlyElement(diff);
+        
         Multiset<Scores.Score> score1 = scores.get(move1);
         Multiset<Scores.Score> score2 = scores.get(move2);
 
@@ -390,9 +389,8 @@ public class Game {
 
         int wd = scoreDelta.getWhiteDelta();
 
-        PrimitiveConstraint constraint = null;
         if (wd == 1) {
-            constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE)), diff);
+            impose(scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE)), diff));
             
             // if no reds and white gone from 2 to 3, then we know that two non-white pegs don't appear in either of the
             // two non-white positions
@@ -410,15 +408,11 @@ public class Game {
                 }
             }
         } else if (wd == -1) {
-            constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE)), diff);
+            impose(scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE)), diff));
         } else if (wd == 2) {
-            constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff);
+            impose(scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff));
         } else if (wd == -2) {
-            constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff);
-        }
-
-        if (constraint != null) {
-            impose(constraint);
+            impose(scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff));
         }
     }
 
@@ -430,23 +424,18 @@ public class Game {
 
         int wd = scoreDelta.getWhiteDelta();
 
-        PrimitiveConstraint constraint = null;
         if (wd == 1) {
-            constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, IGNORE)), diff);
+            impose(scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, IGNORE)), diff));
         } else if (wd == -1) {
-            constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, IGNORE)), diff);
+            impose(scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, IGNORE)), diff));
         } else if (wd == 2) {
-            constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff);
+            impose(scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff));
         } else if (wd == -2) {
-            constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff);
+            impose(scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff));
         } else if (wd == 3) {
-            constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, WHITE, WHITE)), diff);
+            impose(scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, WHITE, WHITE)), diff));
         } else if (wd == -3) {
-            constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, WHITE, WHITE)), diff);
-        }
-
-        if (constraint != null) {
-            impose(constraint);
+            impose(scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, WHITE, WHITE)), diff));
         }
     }
     
@@ -475,6 +464,7 @@ public class Game {
         }
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     public static void main(String[] args) throws IOException {
         System.out.println("MASTERMIND");
         System.out.println("**********");
