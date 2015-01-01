@@ -146,26 +146,24 @@ public class Game {
 
         impose(scoreConstraint(move, score));
 
-        if (moves.size() <= 1) {
-            return countSolutions(false);
-        }
+        if (moves.size() > 1) {
+            for (List<Integer> previousMove : moves) {
+                Set<Integer> diff = diff(previousMove, move);
+                if (VERBOSE) {
+                    System.out.println(secret);
+                    System.out.println(previousMove + "; " + scores.get(previousMove));
+                    System.out.println(move + "; " + scores.get(move));
+                }
+                if (diff.size() == 1) {
+                    imposeDiff1Constraints(previousMove, move, Iterables.getOnlyElement(diff));
+                } else if (diff.size() == 2) {
+                    imposeDiff2Constraints(previousMove, move, diff);
+                } else if (diff.size() == 3) {
+                    imposeDiff3Constraints(previousMove, move, diff);
+                }
 
-        for (List<Integer> previousMove : moves) {
-            Set<Integer> diff = diff(previousMove, move);
-            if (VERBOSE) {
-                System.out.println(secret);
-                System.out.println(previousMove + "; " + scores.get(previousMove));
-                System.out.println(move + "; " + scores.get(move));
+                imposeColourConstraints(previousMove, move);
             }
-            if (diff.size() == 1) {
-                imposeDiff1Constraints(previousMove, move, Iterables.getOnlyElement(diff));
-            } else if (diff.size() == 2) {
-                imposeDiff2Constraints(previousMove, move, diff);
-            } else if (diff.size() == 3) {
-                imposeDiff3Constraints(previousMove, move, diff);
-            }
-            
-            imposeColourConstraints(previousMove, move);
         }
         return countSolutions(false);
     }
