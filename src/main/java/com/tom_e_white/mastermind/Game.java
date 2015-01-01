@@ -415,6 +415,14 @@ public class Game {
     }
     
     private void imposeColourConstraints(List<Integer> move1, List<Integer> move2) {
+        // TODO: this fails for the following - it states that neither 1 nor 2 appear, but 2 does appear
+        // [0, 0, 2, 2]
+        // [0, 1, 2, 3]; [WHITE x 2, NONE x 2]
+        // [0, 0, 0, 3]; [WHITE x 2, NONE x 2]
+        // However, it needs to work for the following (3 doesn't appear)
+        // [5, 5, 1, 2]
+        // [1, 5, 1, 2]; [WHITE x 3, NONE]
+        // [1, 5, 3, 2]; [RED, WHITE x 2, NONE]
         Multiset<Scores.Score> score1 = scores.get(move1);
         Multiset<Scores.Score> score2 = scores.get(move2);
         if (score1.count(WHITE) + score1.count(RED) == score2.count(WHITE) + score2.count(RED)) { // same number of colours in both moves
