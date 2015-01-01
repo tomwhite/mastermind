@@ -212,6 +212,17 @@ public class Game {
         return new And(noneConstraint(colour, pos), new Or(constraints));
     }
 
+    private PrimitiveConstraint redConstraint(int colour, int pos, Set<Integer> possiblePos) {
+        ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
+        for (int i : possiblePos) {
+            if (i == pos) {
+                continue;
+            }
+            constraints.add(new XeqC(v[i], colour));
+        }
+        return new And(noneConstraint(colour, pos), new Or(constraints));
+    }
+
     /**
      * Colour does not appear in given position
      */
@@ -249,15 +260,23 @@ public class Game {
         ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
         for (List<Scores.Score> combo : Scores.scoreCombinations(score)) {
             ArrayList<PrimitiveConstraint> moveConstraints = Lists.newArrayList();
+            Set<Integer> possiblePos = Sets.newLinkedHashSet(Lists.newArrayList(0, 1, 2, 3));
             int offset = 0;
             for (int i : positions) {
                 Scores.Score s = combo.get(offset);
                 if (s.equals(WHITE)) {
                     moveConstraints.add(whiteConstraint(move.get(i), i));
-                } else if (s.equals(RED)) {
-                    moveConstraints.add(redConstraint(move.get(i), i));
+                    possiblePos.remove(i); // red can't actually appear where white does
                 } else if (s.equals(NONE)) {
                     moveConstraints.add(noneConstraint(move.get(i), i));
+                }
+                offset++;
+            }
+            offset = 0;
+            for (int i : positions) {
+                Scores.Score s = combo.get(offset);
+                if (s.equals(RED)) {
+                    moveConstraints.add(redConstraint(move.get(i), i, possiblePos));
                 }
                 offset++;
             }
