@@ -17,6 +17,7 @@ import static org.junit.Assert.*;
 public class Game {
 
     private static final int REPORT_NUM_SOLUTIONS = 2;
+    private static final boolean VERBOSE = false;
 
     private List<Integer> secret;
     private Store store;
@@ -167,9 +168,11 @@ public class Game {
 
         for (List<Integer> previousMove : moves) {
             Set<Integer> diff = diff(previousMove, move);
-//            System.out.println(secret);
-//            System.out.println(previousMove + "; " + scores.get(previousMove));
-//            System.out.println(move + "; " + scores.get(move));
+            if (VERBOSE) {
+                System.out.println(secret);
+                System.out.println(previousMove + "; " + scores.get(previousMove));
+                System.out.println(move + "; " + scores.get(move));
+            }
             if (diff.size() == 1) {
                 imposeDiff1Constraints(previousMove, move, Iterables.getOnlyElement(diff));
             } else if (diff.size() == 2) {
@@ -402,6 +405,9 @@ public class Game {
     }
 
     private void imposeDiff2Constraints(List<Integer> move1, List<Integer> move2, Set<Integer> diff) {
+        Set<Integer> diffPosNeg = Sets.newLinkedHashSet(Lists.newArrayList(0, 1, 2, 3));
+        diffPosNeg.removeAll(diff);
+        
         Multiset<Scores.Score> score1 = scores.get(move1);
         Multiset<Scores.Score> score2 = scores.get(move2);
 
@@ -427,6 +433,22 @@ public class Game {
 //            }
         } else if (wd == 1) {
             constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE)), diff);
+            
+            // if no reds and white gone from 2 to 3, then we know that two non-white pegs don't appear in either of the
+            // two non-white positions
+            // TODO: generalize this logic
+            int wc1 = score1.count(WHITE);
+            int wc2 = score2.count(WHITE);
+            int rc1 = score1.count(RED);
+            int rc2 = score2.count(RED);
+            if (wc1 == 2 && wc2 == 3 && rc1 == 0 && rc2 == 0) {
+                for (int i : diff) {
+                    int col = move1.get(i);
+                    for (int j : diff) {
+                        impose(noneConstraint(col, j));
+                    }
+                }
+            }
         } else if (wd == -1) {
             constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE)), diff);
         } else if (wd == 2) {
