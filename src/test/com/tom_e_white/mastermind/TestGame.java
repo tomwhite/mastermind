@@ -19,6 +19,7 @@ public class TestGame {
         Multiset<List<Multiset<Scores.Score>>> scoresHist = HashMultiset.create();
         List<List<List<Integer>>> lostMoves = Lists.newArrayList();
         List<List<Multiset<Scores.Score>>> lostScores = Lists.newArrayList();
+        double totalMoves = 0;
         for (int i = 0; i < 6; i++) {
             for (int j = 0; j < 6; j++) {
                 for (int k = 0; k < 6; k++) {
@@ -30,6 +31,7 @@ public class TestGame {
                         List<Multiset<Scores.Score>> scores = result.getScores();
                         scores.remove(scores.size() - 1); // remove last move
                         scoresHist.add(scores);
+                        totalMoves += result.getMoves().size();
                         if (!result.hasWon()) {
                             numLost++;
                             lostMoves.add(result.getMoves());
@@ -51,6 +53,7 @@ public class TestGame {
         for (List<Multiset<Scores.Score>> scores : lostScores) {
             System.out.println(scoresHist.count(scores));
         }
+        System.out.println("Avg moves: " +(totalMoves/1296));
     }
 
 }

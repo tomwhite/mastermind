@@ -107,22 +107,6 @@ public class Game {
         return solution;
     }
 
-    private int minDist(List<Integer> move) {
-        int min = Integer.MAX_VALUE;
-        for (List<Integer> previousMove : moves) {
-            int dist = dist(previousMove, move);
-            if (dist < min) {
-                min = dist;
-            }
-        }
-        return min;
-    }
-
-    private int weight(List<Integer> move) {
-        return (minDist(move) == 1 ? 1 : 0) +
-                 (hasDistinctColours(move) ? 1 : 0);
-    }
-
     private int countSolutions(boolean verbose) {
         Search<IntVar> search = new DepthFirstSearch<IntVar>();
         SelectChoicePoint<IntVar> select =
@@ -215,6 +199,9 @@ public class Game {
         return new And(noneConstraint(colour, pos), new Or(constraints));
     }
 
+    /**
+     * Colour does not appear in given position but does appear in another position (restricted from full set of positions)
+     */
     private PrimitiveConstraint redConstraint(int colour, int pos, Set<Integer> possiblePos) {
         ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
         for (int i : possiblePos) {
@@ -341,16 +328,6 @@ public class Game {
         return positions;
     }
 
-    private int dist(List<Integer> move1, List<Integer> move2) {
-        int dist = 0;
-        for (int i = 0; i < 4; i++) {
-            if (move1.get(i) != move2.get(i)) {
-                dist++;
-            }
-        }
-        return dist;
-    }
-
     private boolean hasDistinctColours(List<Integer> move) {
         return Sets.newHashSet(move).size() == 4;
     }
@@ -413,25 +390,10 @@ public class Game {
 
         Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
 
-        int rd = scoreDelta.getRedDelta();
         int wd = scoreDelta.getWhiteDelta();
 
         PrimitiveConstraint constraint = null;
-        if (wd == 0) {
-            // TODO: this is not strictly correct, consider the following where RED is not pos 0=3 or 3=2
-            // [3, 5, 5, 0]
-            // [2, 5, 0, 0]; [WHITE x 2]
-            // [3, 5, 0, 2]; [RED, WHITE x 2]
-//            if (rd == 1) {
-//                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, IGNORE)), diff);
-//            } else if (rd == -1) {
-//                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, IGNORE)), diff);
-//            } else if (rd == 2) {
-//                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, RED)), diff);
-//            } else if (rd == -2) {
-//                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, RED)), diff);
-//            }
-        } else if (wd == 1) {
+        if (wd == 1) {
             constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE)), diff);
             
             // if no reds and white gone from 2 to 3, then we know that two non-white pegs don't appear in either of the
@@ -468,25 +430,10 @@ public class Game {
 
         Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
 
-        int rd = scoreDelta.getRedDelta();
         int wd = scoreDelta.getWhiteDelta();
 
         PrimitiveConstraint constraint = null;
-        if (wd == 0) {
-            if (rd == 1) {
-                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, IGNORE, IGNORE)), diff);
-            } else if (rd == -1) {
-                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, IGNORE, IGNORE)), diff);
-            } else if (rd == 2) {
-                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, RED, IGNORE)), diff);
-            } else if (rd == -2) {
-                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, RED, IGNORE)), diff);
-            } else if (rd == 3) {
-                constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(RED, RED, RED)), diff);
-            } else if (rd == -3) {
-                constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(RED, RED, RED)), diff);
-            }
-        } else if (wd == 1) {
+        if (wd == 1) {
             constraint = scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, IGNORE)), diff);
         } else if (wd == -1) {
             constraint = scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, IGNORE)), diff);
