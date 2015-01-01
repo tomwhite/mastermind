@@ -377,9 +377,6 @@ public class Game {
     }
 
     private void imposeDiff2Constraints(List<Integer> move1, List<Integer> move2, Set<Integer> diff) {
-        Set<Integer> diffPosNeg = Sets.newLinkedHashSet(Lists.newArrayList(0, 1, 2, 3));
-        diffPosNeg.removeAll(diff);
-        
         Multiset<Scores.Score> score1 = scores.get(move1);
         Multiset<Scores.Score> score2 = scores.get(move2);
 
