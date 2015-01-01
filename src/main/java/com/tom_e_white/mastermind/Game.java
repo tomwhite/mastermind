@@ -323,8 +323,6 @@ public class Game {
             imposeDiff1Constraints(move1, move2, diff);
         } else if (diff.size() == 2) {
             imposeDiff2Constraints(move1, move2, diff);
-        } else if (diff.size() == 3) {
-            imposeDiff3Constraints(move1, move2, diff);
         }
     }
     private void imposeDiff1Constraints(List<Integer> move1, List<Integer> move2, Set<Integer> diff) {
@@ -416,29 +414,6 @@ public class Game {
         }
     }
 
-    private void imposeDiff3Constraints(List<Integer> move1, List<Integer> move2, Set<Integer> diff) {
-        Multiset<Scores.Score> score1 = scores.get(move1);
-        Multiset<Scores.Score> score2 = scores.get(move2);
-
-        Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
-
-        int wd = scoreDelta.getWhiteDelta();
-
-        if (wd == 1) {
-            impose(scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, IGNORE)), diff));
-        } else if (wd == -1) {
-            impose(scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, IGNORE)), diff));
-        } else if (wd == 2) {
-            impose(scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff));
-        } else if (wd == -2) {
-            impose(scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, WHITE)), diff));
-        } else if (wd == 3) {
-            impose(scoreConstraint(move2, HashMultiset.create(Lists.newArrayList(WHITE, WHITE, WHITE)), diff));
-        } else if (wd == -3) {
-            impose(scoreConstraint(move1, HashMultiset.create(Lists.newArrayList(WHITE, WHITE, WHITE)), diff));
-        }
-    }
-    
     private Set<Integer> colourSet(List<Integer> move) {
         return Sets.newLinkedHashSet(move);
     }
