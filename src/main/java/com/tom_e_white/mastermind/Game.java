@@ -177,6 +177,8 @@ public class Game {
             } else if (diff.size() == 3) {
                 imposeDiff3Constraints(previousMove, move, diff);
             }
+            
+            imposeColourConstraints(previousMove, move);
         }
         return countSolutions(false);
     }
@@ -227,6 +229,18 @@ public class Game {
         }
         return new And(constraints);
     }
+
+    /**
+     * Colour appears in some position
+     */
+    private PrimitiveConstraint someConstraint(int colour) {
+        ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
+        for (int i = 0; i < 4; i++) {
+            constraints.add(new XeqC(v[i], colour));
+        }
+        return new Or(constraints);
+    }
+
 
     private Set<Integer> ALL_POS = Sets.newLinkedHashSet(Lists.newArrayList(0, 1, 2, 3));
 
@@ -459,6 +473,38 @@ public class Game {
 
         if (constraint != null) {
             impose(constraint);
+        }
+    }
+    
+    private Multiset<Integer> colourSet(List<Integer> move) {
+        return LinkedHashMultiset.create(move);
+    }
+    
+    private void imposeColourConstraints(List<Integer> move1, List<Integer> move2) {
+        if (!hasDistinctColours(move1) || !hasDistinctColours(move2)) { // TODO: can we remove this?
+            return;
+        }
+        Multiset<Integer> cols1 = colourSet(move1);
+        Multiset<Integer> cols2 = colourSet(move2);
+        Multiset<Integer> intersection = Multisets.intersection(cols1, cols2);
+        Multiset<Integer> diff1 = Multisets.difference(cols1, intersection);
+        Multiset<Integer> diff2 = Multisets.difference(cols2, intersection);
+        if (diff1.size() == 1 && diff2.size() == 1) {
+            Multiset<Scores.Score> score1 = scores.get(move1);
+            Multiset<Scores.Score> score2 = scores.get(move2);
+            if (score1.count(WHITE) + score1.count(RED) == score2.count(WHITE) + score2.count(RED)) { // same number of colours in both moves
+//                System.out.println("*****");
+//                System.out.println(cols1);
+//                System.out.println(cols2);
+//                System.out.println(intersection);
+//                System.out.println(diff1);
+//                System.out.println(diff2);
+                int col1 = Iterables.getOnlyElement(diff1);
+                int col2 = Iterables.getOnlyElement(diff2);
+                // either both col1 and col2 appear somewhere, or neither do
+                PrimitiveConstraint c = new And(noneConstraint(col1), noneConstraint(col2));
+                impose(new Or(new And(someConstraint(col1), someConstraint(col2)), c));
+            }
         }
     }
 
