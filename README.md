@@ -17,17 +17,10 @@ win 100% of games, but I haven't managed this yet.
 The algorithm works as follows:
 
 * The program maintains a list of constraints over the solution space of 1296 solutions.
-* The first four moves explore the solution space statically. The idea is that moves with four distinct colours are played, each of which differs in one position to a previous move. The moves are (where colours are labelled 0 to 5):
+* The first two moves explore the solution space statically. The idea is that moves with distinct colours are played, each of which differs in one position to a previous move. The moves are (where colours are labelled 0 to 5):
     * 0, 1, 2, 3
-    *  4, 1, 2, 3
-    * 4, 5, 2, 3
-    * 4, 5, 0, 3
+    * 4, 1, 2, 3
 * The remaining moves search the space of remaining solutions.
 * Each move and its associated score is used to constrain the solution space. For example...
 * Each move is compared to previous moves, and the _difference_ between it and each previous move is used to constrain
-the space further. The difference is looked at both with position being taken into account, as well as just by looking
-at the move as a set of colours (where order is ignored).
-
-Areas for improvement
-
-* The static moves could be replaced by dynamic move
+the space further.
