@@ -13,7 +13,7 @@ public class HumanScorer implements Scorer {
 
     @Override
     public Multiset<Scores.Score> score(Move move) {
-        System.out.println("My move: " + toString(move));
+        System.out.println("My move: " + move);
         System.out.println("Enter white and red pegs (in any order). For example, rrw for two reds and a white.");
         try {
             String line = br.readLine();
@@ -35,11 +35,4 @@ public class HumanScorer implements Scorer {
         }
     }
 
-    private String toString(Move move) {
-        StringBuilder sb = new StringBuilder();
-        for (int i : move) {
-            sb.append(Peg.values()[i]).append(" ");
-        }
-        return sb.toString();
-    }
 }
