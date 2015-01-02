@@ -1,8 +1,11 @@
 package com.tom_e_white.mastermind;
 
+import com.google.common.collect.Lists;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.List;
 
 /**
  * Prompts a human to score moves for when a human is playing the computer.
@@ -17,19 +20,19 @@ public class HumanScorer implements Scorer {
         System.out.println("Enter white and red pegs (in any order). For example, rrw for two reds and a white.");
         try {
             String line = br.readLine();
-            Score score = new Score();
+            List<Score.Peg> pegs = Lists.newArrayList();
             // add whites first
             for (char c : line.toCharArray()) {
                 if (c == 'w' || c == 'W') {
-                    score.add(Score.Peg.WHITE);
+                    pegs.add(Score.Peg.WHITE);
                 }
             }
             for (char c : line.toCharArray()) {
                 if (c == 'r' || c == 'R') {
-                    score.add(Score.Peg.RED);
+                    pegs.add(Score.Peg.RED);
                 }
             }
-            return score;
+            return new Score(pegs);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

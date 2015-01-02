@@ -1,9 +1,7 @@
 package com.tom_e_white.mastermind;
 
-import com.google.common.collect.Collections2;
-import com.google.common.collect.EnumMultiset;
-import com.google.common.collect.Multiset;
-import com.google.common.collect.Sets;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -25,22 +23,26 @@ public class Score {
     public static final Score ALL_WHITE = new Score(WHITE, WHITE, WHITE, WHITE);
     
     private Multiset<Peg> pegs;
-
-    public Score() {
-        this.pegs = EnumMultiset.create(Peg.class);
-    }
     
     public Score(Peg... pegs) {
-        this.pegs = EnumMultiset.create(Arrays.asList(pegs), Peg.class);
+        this(Arrays.asList(pegs));
+    }
+
+    public Score(List<Peg> pegs) {
+        Preconditions.checkArgument(pegs.size() <= Game.NUM_POSITIONS);
+        this.pegs = EnumMultiset.create(pegs, Peg.class);
+        while (this.pegs.size() < Game.NUM_POSITIONS) {
+            this.pegs.add(NONE);
+        }
     }
 
     public static Score score(Move secret, Move move) {
-        Score score = new Score();
+        List<Peg> pegs = Lists.newArrayList();
         List<Boolean> matched = Arrays.asList(false, false, false, false);
         List<Boolean> used = Arrays.asList(false, false, false, false);
         for (int i = 0; i < Game.NUM_POSITIONS; i++) {
             if (move.get(i) == secret.get(i)) {
-                score.add(WHITE);
+                pegs.add(WHITE);
                 matched.set(i, true);
                 used.set(i, true);
             }
@@ -51,21 +53,13 @@ public class Score {
             }
             for (int j = 0; j < Game.NUM_POSITIONS; j++) {
                 if (i != j && !used.get(j) && move.get(i) == secret.get(j)) {
-                    score.add(RED);
+                    pegs.add(RED);
                     used.set(j, true);
                     break;
                 }
             }
         }
-        return score;
-    }
-
-    public void add(Peg peg) {
-        pegs.add(peg);
-    }
-
-    public int size() {
-        return pegs.size();
+        return new Score(pegs);
     }
 
     public int count(Peg peg) {

@@ -219,9 +219,6 @@ public class Game {
      * A constraint for a normal move.
      */
     private PrimitiveConstraint scoreConstraint(Move move, Score score) {
-        while (score.size() < ALL_POS.size()) {
-            score.add(NONE);
-        }
         // if no whites or reds then none of the colours appear anywhere
         if (score.count(NONE) == NUM_POSITIONS) {
             ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
