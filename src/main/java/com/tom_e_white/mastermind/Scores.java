@@ -12,8 +12,7 @@ public class Scores {
     public enum Score {
         RED,
         WHITE,
-        NONE, // neither RED nor WHITE - i.e. wrong colour
-        IGNORE // ignore for the purposes of scoring
+        NONE // neither RED nor WHITE - i.e. wrong colour
     }
 
     public static class ScoreDelta {
