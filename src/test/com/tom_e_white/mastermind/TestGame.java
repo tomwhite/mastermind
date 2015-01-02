@@ -12,9 +12,9 @@ public class TestGame {
         int numLost = 0;
         Multiset<Integer> solutionsHist = HashMultiset.create();
         Multiset<Integer> totalMovesHist = TreeMultiset.create();
-        Multiset<List<Multiset<Scores.Score>>> scoresHist = HashMultiset.create();
+        Multiset<List<Score>> scoresHist = HashMultiset.create();
         List<List<Move>> lostMoves = Lists.newArrayList();
-        List<List<Multiset<Scores.Score>>> lostScores = Lists.newArrayList();
+        List<List<Score>> lostScores = Lists.newArrayList();
         double totalMoves = 0;
         for (int i = 0; i < 6; i++) {
             for (int j = 0; j < 6; j++) {
@@ -25,7 +25,7 @@ public class TestGame {
                         Result result = game.play(new ComputerScorer(secret));
                         solutionsHist.add(result.getSolutionsCount());
                         totalMovesHist.add(result.getMoves().size());
-                        List<Multiset<Scores.Score>> scores = result.getScores();
+                        List<Score> scores = result.getScores();
                         scores.remove(scores.size() - 1); // remove last move
                         scoresHist.add(scores);
                         totalMoves += result.getMoves().size();
@@ -47,7 +47,7 @@ public class TestGame {
         }
         System.out.println("Total: " + total + ", " + (100*total/1296) + "%");
         System.out.println("Lost: " + numLost);
-        for (List<Multiset<Scores.Score>> scores : lostScores) {
+        for (List<Score> scores : lostScores) {
             System.out.println(scoresHist.count(scores));
         }
         System.out.println("Moves: " + totalMovesHist);

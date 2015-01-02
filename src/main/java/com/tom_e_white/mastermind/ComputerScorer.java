@@ -1,7 +1,8 @@
 package com.tom_e_white.mastermind;
 
-import com.google.common.collect.Multiset;
-
+/**
+ * A computer scorer for when the computer knows the secret answer.
+ */
 public class ComputerScorer implements Scorer {
     private Move secret;
 
@@ -10,7 +11,7 @@ public class ComputerScorer implements Scorer {
     }
 
     @Override
-    public Multiset<Scores.Score> score(Move move) {
-        return Scores.score(secret, move);
+    public Score score(Move move) {
+        return Score.score(secret, move);
     }
 }

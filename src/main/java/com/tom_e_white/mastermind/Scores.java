@@ -7,16 +7,10 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-import static com.tom_e_white.mastermind.Scores.Score.RED;
-import static com.tom_e_white.mastermind.Scores.Score.WHITE;
+import static com.tom_e_white.mastermind.Score.Peg.RED;
+import static com.tom_e_white.mastermind.Score.Peg.WHITE;
 
 public class Scores {
-
-    public enum Score {
-        RED,
-        WHITE,
-        NONE // neither RED nor WHITE - i.e. wrong colour
-    }
 
     public static class ScoreDelta {
         int whiteDelta;
@@ -87,8 +81,8 @@ public class Scores {
         return Arrays.asList(a, b, c, d);
     }
 
-    public static Multiset<Score> score(List<Integer> secret, List<Integer> move) {
-        Multiset<Score> scores = EnumMultiset.create(Score.class);
+    public static Multiset<Score.Peg> score(List<Integer> secret, List<Integer> move) {
+        Multiset<Score.Peg> scores = EnumMultiset.create(Score.Peg.class);
         List<Boolean> matched = Arrays.asList(false, false, false, false);
         List<Boolean> used = Arrays.asList(false, false, false, false);
         for (int i = 0; i < Game.NUM_POSITIONS; i++) {
@@ -113,41 +107,15 @@ public class Scores {
         return scores;
     }
 
-    public static Multiset<Score> score(Move secret, Move move) {
-        Multiset<Score> scores = EnumMultiset.create(Score.class);
-        List<Boolean> matched = Arrays.asList(false, false, false, false);
-        List<Boolean> used = Arrays.asList(false, false, false, false);
-        for (int i = 0; i < Game.NUM_POSITIONS; i++) {
-            if (move.get(i) == secret.get(i)) {
-                scores.add(WHITE);
-                matched.set(i, true);
-                used.set(i, true);
-            }
-        }
-        for (int i = 0; i < Game.NUM_POSITIONS; i++) {
-            if (matched.get(i)) {
-                continue;
-            }
-            for (int j = 0; j < Game.NUM_POSITIONS; j++) {
-                if (i != j && !used.get(j) && move.get(i) == secret.get(j)) {
-                    scores.add(RED);
-                    used.set(j, true);
-                    break;
-                }
-            }
-        }
-        return scores;
-    }
-
-    public static Multiset<Multiset<Score>> scoreHistogram(int a, int b, int c, int d) {
+    public static Multiset<Multiset<Score.Peg>> scoreHistogram(int a, int b, int c, int d) {
         List<Integer> secret = move(a, b, c, d);
-        Multiset<Multiset<Score>> histogram = HashMultiset.create();
+        Multiset<Multiset<Score.Peg>> histogram = HashMultiset.create();
         for (int i = 0; i < 6; i++) {
             for (int j = 0; j < 6; j++) {
                 for (int k = 0; k < 6; k++) {
                     for (int l = 0; l < 6; l++) {
                         List<Integer> move = move(i, j, k, l);
-                        Multiset<Score> score = score(secret, move);
+                        Multiset<Score.Peg> score = score(secret, move);
                         histogram.add(score);
                         //System.out.println(i + "" + j + "" + k + "" + l + "; " + score);
                     }
@@ -172,13 +140,13 @@ public class Scores {
         return Multisets.copyHighestCountFirst(histogram);
     }
 
-    public static double averageScore(Multiset<Multiset<Score>> histogram) {
+    public static double averageScore(Multiset<Multiset<Score.Peg>> histogram) {
         double s = 0;
-        for (Multiset<Score> set : histogram) {
-            for (Score score : set) {
-                if (score == WHITE) {
+        for (Multiset<Score.Peg> set : histogram) {
+            for (Score.Peg peg : set) {
+                if (peg == WHITE) {
                     s += 2;
-                } else if (score == RED) {
+                } else if (peg == RED) {
                     s += 1;
                 }
             }
@@ -187,7 +155,7 @@ public class Scores {
     }
 
     public static void reportHistogramFor(int a, int b, int c, int d) {
-        Multiset<Multiset<Score>> histogram = scoreHistogram(a, b, c, d);
+        Multiset<Multiset<Score.Peg>> histogram = scoreHistogram(a, b, c, d);
         System.out.println(a + "" + b + "" + c + "" + d);
         System.out.println(histogram);
         System.out.println(averageScore(histogram));
@@ -239,13 +207,8 @@ public class Scores {
         }
         System.out.println();
     }
-    public static ScoreDelta scoreDelta(Multiset<Score> score1, Multiset<Score> score2) {
+    public static ScoreDelta scoreDelta(Multiset<Score.Peg> score1, Multiset<Score.Peg> score2) {
         return new ScoreDelta(score2.count(WHITE) - score1.count(WHITE), score2.count(RED) - score1.count(RED));
     }
-
-    public static Set<List<Score>> scoreCombinations(Multiset<Score> score) {
-        return Sets.newLinkedHashSet(Collections2.permutations(score));
-    }
-
 
 }

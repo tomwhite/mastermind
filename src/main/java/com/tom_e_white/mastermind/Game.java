@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.tom_e_white.mastermind.Scores.Score.*;
+import static com.tom_e_white.mastermind.Score.Peg.*;
 
 /**
  * Plays a game of Mastermind.
@@ -29,7 +29,7 @@ public class Game {
     
     private Scorer scorer;
     private List<Move> moves;
-    private Map<Move, Multiset<Scores.Score>> scores;
+    private Map<Move, Score> scores;
     private Store store;
     protected IntVar[] pegs;
 
@@ -63,7 +63,7 @@ public class Game {
         if (!hasWon()) {
             makeMove(search());
         }
-        List<Multiset<Scores.Score>> scoresList = Lists.newArrayList();
+        List<Score> scoresList = Lists.newArrayList();
         for (Move move : moves) {
             scoresList.add(scores.get(move));
         }
@@ -71,7 +71,7 @@ public class Game {
     }
 
     private boolean hasWon() {
-        return scores.get(moves.get(moves.size() - 1)).equals(ImmutableMultiset.of(WHITE, WHITE, WHITE, WHITE));
+        return scores.get(moves.get(moves.size() - 1)).equals(Score.ALL_WHITE);
     }
 
     /**
@@ -149,7 +149,7 @@ public class Game {
     private int makeMove(Move move) {
         moves.add(move);
 
-        Multiset<Scores.Score> score = scorer.score(move);
+        Score score = scorer.score(move);
         scores.put(move, score);
 
         impose(scoreConstraint(move, score));
@@ -218,7 +218,7 @@ public class Game {
     /**
      * A constraint for a normal move.
      */
-    private PrimitiveConstraint scoreConstraint(Move move, Multiset<Scores.Score> score) {
+    private PrimitiveConstraint scoreConstraint(Move move, Score score) {
         while (score.size() < ALL_POS.size()) {
             score.add(NONE);
         }
@@ -231,12 +231,12 @@ public class Game {
             return new And(constraints);
         }
         ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
-        for (List<Scores.Score> combo : Scores.scoreCombinations(score)) {
+        for (List<Score.Peg> combo : score.combinations()) {
             ArrayList<PrimitiveConstraint> moveConstraints = Lists.newArrayList();
             Set<Integer> possibleRedPos = Sets.newLinkedHashSet(Lists.newArrayList(0, 1, 2, 3));
             int offset = 0;
             for (int pos : ALL_POS) {
-                Scores.Score s = combo.get(offset);
+                Score.Peg s = combo.get(offset);
                 int col = move.get(pos);
                 if (s.equals(WHITE)) {
                     moveConstraints.add(whiteConstraint(col, pos));
@@ -253,7 +253,7 @@ public class Game {
             }
             offset = 0;
             for (int pos : ALL_POS) {
-                Scores.Score s = combo.get(offset);
+                Score.Peg s = combo.get(offset);
                 if (s.equals(RED)) {
                     moveConstraints.add(redConstraint(move.get(pos), pos, possibleRedPos));
                 }
@@ -263,8 +263,6 @@ public class Game {
         }
         return new Or(constraints);
     }
-
-
 
     private void imposeDiffConstraints(Move move1, Move move2) {
         Set<Integer> diff = move1.diff(move2);
@@ -283,12 +281,11 @@ public class Game {
     private void imposeDiff1Constraints(Move move1, Move move2, Set<Integer> diff) {
         int diffPos = Iterables.getOnlyElement(diff);
         
-        Multiset<Scores.Score> score1 = scores.get(move1);
-        Multiset<Scores.Score> score2 = scores.get(move2);
+        Score score1 = scores.get(move1);
+        Score score2 = scores.get(move2);
 
-        Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
-        int rd = scoreDelta.getRedDelta();
-        int wd = scoreDelta.getWhiteDelta();
+        int rd = score2.count(RED) - score1.count(RED);
+        int wd = score2.count(WHITE) - score1.count(WHITE);
         int oldCol = move1.get(diffPos);
         int newCol = move2.get(diffPos);
         if (wd == 0) {
@@ -325,15 +322,12 @@ public class Game {
     }
 
     private void imposeDiff2Constraints(Move move1, Move move2, Set<Integer> diff) {
-        Multiset<Scores.Score> score1 = scores.get(move1);
-        Multiset<Scores.Score> score2 = scores.get(move2);
-
-        Scores.ScoreDelta scoreDelta = Scores.scoreDelta(score1, score2);
+        Score score1 = scores.get(move1);
+        Score score2 = scores.get(move2);
 
         int rc1 = score1.count(RED);
         int rc2 = score2.count(RED);
-        int wd = scoreDelta.getWhiteDelta();
-
+        int wd = score2.count(WHITE) - score1.count(WHITE);
         // if number of whites changes (with no reds), then we know that two non-white pegs don't appear in either of the
         // two non-white positions
         // e.g. for the following we know that 5 and 3 don't appear in positions 1 and 3
