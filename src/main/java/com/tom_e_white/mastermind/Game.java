@@ -45,10 +45,9 @@ public class Game {
         for (int i = 0; i < pegs.length; i++) {
             pegs[i] = new IntVar(store, "peg" + i, 0, 5);
         }
-
         List<List<Integer>> staticMoves = Lists.newArrayList(
-                move(0, 1, 2, 3),
-                move(4, 1, 2, 3)
+            move(0, 1, 2, 3),
+            move(4, 1, 2, 3)
         );
         int moveCount = 0;
         while (moveCount < 7) {
