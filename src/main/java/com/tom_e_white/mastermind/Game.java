@@ -16,7 +16,7 @@ import static org.junit.Assert.*;
 
 public class Game {
 
-    private static final int REPORT_NUM_SOLUTIONS = 2;
+    private static final int REPORT_NUM_SOLUTIONS = 0;
     private static final boolean VERBOSE = false;
     private Set<Integer> ALL_POS = ImmutableSet.copyOf(Sets.newLinkedHashSet(Lists.newArrayList(0, 1, 2, 3)));
 
@@ -150,7 +150,6 @@ public class Game {
         if (moves.size() > 1) {
             for (List<Integer> previousMove : moves) {
                 imposeDiffConstraints(previousMove, move);
-                //imposeColourConstraints(previousMove, move);
             }
         }
         return countSolutions(false);
@@ -224,13 +223,13 @@ public class Game {
         while (score.size() < positions.size()) {
             score.add(NONE);
         }
-//        if (score.count(NONE) == 4) {
-//            ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
-//            for (int i : positions) {
-//                constraints.add(noneConstraint(move.get(i)));
-//            }
-//            return new And(constraints);
-//        }
+        if (score.count(NONE) == 4) {
+            ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
+            for (int i : positions) {
+                constraints.add(noneConstraint(move.get(i)));
+            }
+            return new And(constraints);
+        }
         ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
         for (List<Scores.Score> combo : Scores.scoreCombinations(score)) {
             ArrayList<PrimitiveConstraint> moveConstraints = Lists.newArrayList();
@@ -330,6 +329,7 @@ public class Game {
         if (diff.size() == 1) {
             imposeDiff1Constraints(move1, move2, diff);
         } else if (diff.size() == 2) {
+            // gives a slight improvement, but not strictly needed
             imposeDiff2Constraints(move1, move2, diff);
         }
     }
@@ -414,37 +414,6 @@ public class Game {
                         impose(noneConstraint(col, j));
                     }
                 }
-            }
-        }
-    }
-
-    private Set<Integer> colourSet(List<Integer> move) {
-        return Sets.newLinkedHashSet(move);
-    }
-    
-    private void imposeColourConstraints(List<Integer> move1, List<Integer> move2) {
-        // TODO: this fails for the following - it states that neither 1 nor 2 appear, but 2 does appear
-        // [0, 0, 2, 2]
-        // [0, 1, 2, 3]; [WHITE x 2, NONE x 2]
-        // [0, 0, 0, 3]; [WHITE x 2, NONE x 2]
-        // However, it needs to work for the following (3 doesn't appear)
-        // [5, 5, 1, 2]
-        // [1, 5, 1, 2]; [WHITE x 3, NONE]
-        // [1, 5, 3, 2]; [RED, WHITE x 2, NONE]
-        Multiset<Scores.Score> score1 = scores.get(move1);
-        Multiset<Scores.Score> score2 = scores.get(move2);
-        if (score1.count(WHITE) + score1.count(RED) == score2.count(WHITE) + score2.count(RED)) { // same number of colours in both moves
-            Set<Integer> cols1 = colourSet(move1);
-            Set<Integer> cols2 = colourSet(move2);
-            if (cols1.containsAll(cols2)) {
-                for (int col : Sets.difference(cols1, cols2)) {
-                    impose(noneConstraint(col));
-                }
-            } else if (cols2.containsAll(cols1)) {
-                for (int col : Sets.difference(cols2, cols1)) {
-                    impose(noneConstraint(col));
-                }
-
             }
         }
     }
