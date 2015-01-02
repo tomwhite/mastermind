@@ -4,6 +4,9 @@ import com.google.common.collect.Multiset;
 
 import java.util.List;
 
+/**
+ * The result of the game. Contains information about the moves played, the scores, who won etc.*
+ */
 public class Result {
     private int solutionsCount;
     private boolean won;

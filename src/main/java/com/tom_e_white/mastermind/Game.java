@@ -12,7 +12,6 @@ import java.util.*;
 
 import static com.tom_e_white.mastermind.Scores.Score.*;
 import static com.tom_e_white.mastermind.Scores.move;
-import static org.junit.Assert.*;
 
 /**
  * Plays a game of Mastermind.
@@ -26,26 +25,17 @@ public class Game {
     private static final int REPORT_NUM_SOLUTIONS = 0;
     private static final boolean VERBOSE = false;
     
-    private List<Integer> secret;
-    private Store store;
-    private IntVar[] pegs;
-
     private Scorer scorer;
     private List<List<Integer>> moves;
     private Map<List<Integer>, Multiset<Scores.Score>> scores;
-
-    public Game() {
-    }
-
-    public Game(List<Integer> secret) {
-        this.secret = secret;
-    }
+    private Store store;
+    protected IntVar[] pegs;
 
     @SuppressWarnings("unchecked")
     public Result play(Scorer scorer) {
+        this.scorer = scorer;
         moves = Lists.newArrayList();
         scores = Maps.newHashMap();
-        this.scorer = scorer;
         store = new Store();
         pegs = new IntVar[NUM_POSITIONS];
         for (int pos = 0; pos < pegs.length; pos++) {
@@ -98,7 +88,7 @@ public class Game {
 
         boolean result = search.labeling(store, select);
         if (!result) {
-            throw new IllegalStateException("No solutions found for " + secret);
+            throw new IllegalStateException("No solutions found for " + this);
         }
 
         List<Integer> solution = Lists.newArrayList();
@@ -133,7 +123,7 @@ public class Game {
 
         boolean result = search.labeling(store, select);
         if (!result) {
-            throw new IllegalStateException("No solutions found for " + secret);
+            throw new IllegalStateException("No solutions found for " + this);
         }
         int numberOfSolutions = search.getSolutionListener().solutionsNo();
         if (numberOfSolutions == REPORT_NUM_SOLUTIONS && verbose) {
@@ -143,7 +133,7 @@ public class Game {
     }
 
     private void reportGame(Search<IntVar> search) {
-        System.out.println("Report: " + secret);
+        System.out.println("Report: " + this);
         for (List<Integer> move : moves) {
             System.out.println(move + "; " + scores.get(move));
         }
@@ -172,8 +162,7 @@ public class Game {
     /**
      * Impose a constraint.
      */
-    private void impose(PrimitiveConstraint constraint) {
-        assertConstraint(constraint);
+    protected void impose(PrimitiveConstraint constraint) {
         store.impose(constraint);
     }
 
@@ -272,49 +261,6 @@ public class Game {
         return new Or(constraints);
     }
 
-    /**
-     * This ensures that we don't add a constraint that is false by failing immediately
-     */
-    private void assertConstraint(PrimitiveConstraint c) {
-        if (secret == null) {
-            return;
-        }
-        assertTrue(c.toString(), constraintToExpr(c));
-    }
-
-    private boolean constraintToExpr(PrimitiveConstraint c) {
-        if (c instanceof XeqC) {
-            IntVar x = ((XeqC) c).x;
-            int pos = 0;
-            for (IntVar peg : pegs) {
-                if (x == peg) {
-                    return secret.get(pos) == ((XeqC) c).c;
-                }
-                pos++;
-            }
-            fail("Illegal");
-        }
-        if (c instanceof Not) {
-            return !constraintToExpr(((Not) c).c);
-        }
-        if (c instanceof Or) {
-            boolean ret = false;
-            for (PrimitiveConstraint pc : ((Or) c).listOfC) {
-                ret |= constraintToExpr(pc);
-            }
-            return ret;
-        }
-        if (c instanceof And) {
-            boolean ret = true;
-            for (PrimitiveConstraint pc : ((And) c).listOfC) {
-                ret &= constraintToExpr(pc);
-            }
-            return ret;
-        }
-        fail("Illegal");
-        return false;
-    }
-
     private Set<Integer> diff(List<Integer> move1, List<Integer> move2) {
         Set<Integer> positions = Sets.newHashSet();
         for (int pos : ALL_POS) {
@@ -332,7 +278,7 @@ public class Game {
     private void imposeDiffConstraints(List<Integer> move1, List<Integer> move2) {
         Set<Integer> diff = diff(move1, move2);
         if (VERBOSE) {
-            System.out.println(secret);
+            System.out.println(this);
             System.out.println(move1 + "; " + scores.get(move1));
             System.out.println(move2 + "; " + scores.get(move2));
         }

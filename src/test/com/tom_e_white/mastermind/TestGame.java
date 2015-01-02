@@ -23,7 +23,7 @@ public class TestGame {
                 for (int k = 0; k < 6; k++) {
                     for (int l = 0; l < 6; l++) {
                         List<Integer> secret = move(i, j, k, l);
-                        Game game = new Game(secret);
+                        Game game = new TestedGame(secret);
                         Result result = game.play(new ComputerScorer(secret));
                         solutionsHist.add(result.getSolutionsCount());
                         totalMovesHist.add(result.getMoves().size());
