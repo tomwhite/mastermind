@@ -48,9 +48,7 @@ public class Game {
 
         List<List<Integer>> staticMoves = Lists.newArrayList(
                 move(0, 1, 2, 3),
-                move(4, 1, 2, 3),
-                move(4, 5, 2, 3),
-                move(4, 5, 0, 3)
+                move(4, 1, 2, 3)
         );
         int moveCount = 0;
         while (moveCount < 7) {
@@ -153,7 +151,7 @@ public class Game {
         if (moves.size() > 1) {
             for (List<Integer> previousMove : moves) {
                 imposeDiffConstraints(previousMove, move);
-                imposeColourConstraints(previousMove, move);
+                //imposeColourConstraints(previousMove, move);
             }
         }
         return countSolutions(false);
@@ -227,6 +225,13 @@ public class Game {
         while (score.size() < positions.size()) {
             score.add(NONE);
         }
+//        if (score.count(NONE) == 4) {
+//            ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
+//            for (int i : positions) {
+//                constraints.add(noneConstraint(move.get(i)));
+//            }
+//            return new And(constraints);
+//        }
         ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
         for (List<Scores.Score> combo : Scores.scoreCombinations(score)) {
             ArrayList<PrimitiveConstraint> moveConstraints = Lists.newArrayList();
@@ -238,7 +243,11 @@ public class Game {
                     moveConstraints.add(whiteConstraint(move.get(i), i));
                     possiblePos.remove(i); // red can't actually appear where white does
                 } else if (s.equals(NONE)) {
-                    moveConstraints.add(noneConstraint(move.get(i), i));
+                    if (hasDistinctColours(move)) {
+                        moveConstraints.add(noneConstraint(move.get(i)));
+                    } else {
+                        moveConstraints.add(noneConstraint(move.get(i), i));
+                    }
                 }
                 offset++;
             }
