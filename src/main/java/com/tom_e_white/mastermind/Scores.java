@@ -2,7 +2,10 @@ package com.tom_e_white.mastermind;
 
 import com.google.common.collect.*;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
 
 import static com.tom_e_white.mastermind.Scores.Score.RED;
 import static com.tom_e_white.mastermind.Scores.Score.WHITE;
@@ -101,6 +104,32 @@ public class Scores {
             }
             for (int j = 0; j < Game.NUM_POSITIONS; j++) {
                 if (i != j && !used.get(j) && move.get(i).equals(secret.get(j))) {
+                    scores.add(RED);
+                    used.set(j, true);
+                    break;
+                }
+            }
+        }
+        return scores;
+    }
+
+    public static Multiset<Score> score(Move secret, Move move) {
+        Multiset<Score> scores = EnumMultiset.create(Score.class);
+        List<Boolean> matched = Arrays.asList(false, false, false, false);
+        List<Boolean> used = Arrays.asList(false, false, false, false);
+        for (int i = 0; i < Game.NUM_POSITIONS; i++) {
+            if (move.get(i) == secret.get(i)) {
+                scores.add(WHITE);
+                matched.set(i, true);
+                used.set(i, true);
+            }
+        }
+        for (int i = 0; i < Game.NUM_POSITIONS; i++) {
+            if (matched.get(i)) {
+                continue;
+            }
+            for (int j = 0; j < Game.NUM_POSITIONS; j++) {
+                if (i != j && !used.get(j) && move.get(i) == secret.get(j)) {
                     scores.add(RED);
                     used.set(j, true);
                     break;

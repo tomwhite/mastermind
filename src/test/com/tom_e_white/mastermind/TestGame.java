@@ -5,8 +5,6 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static com.tom_e_white.mastermind.Scores.move;
-
 public class TestGame {
 
     @Test
@@ -15,14 +13,14 @@ public class TestGame {
         Multiset<Integer> solutionsHist = HashMultiset.create();
         Multiset<Integer> totalMovesHist = TreeMultiset.create();
         Multiset<List<Multiset<Scores.Score>>> scoresHist = HashMultiset.create();
-        List<List<List<Integer>>> lostMoves = Lists.newArrayList();
+        List<List<Move>> lostMoves = Lists.newArrayList();
         List<List<Multiset<Scores.Score>>> lostScores = Lists.newArrayList();
         double totalMoves = 0;
         for (int i = 0; i < 6; i++) {
             for (int j = 0; j < 6; j++) {
                 for (int k = 0; k < 6; k++) {
                     for (int l = 0; l < 6; l++) {
-                        List<Integer> secret = move(i, j, k, l);
+                        Move secret = new Move(i, j, k, l);
                         Game game = new TestedGame(secret);
                         Result result = game.play(new ComputerScorer(secret));
                         solutionsHist.add(result.getSolutionsCount());

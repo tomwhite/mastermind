@@ -1,6 +1,7 @@
 package com.tom_e_white.mastermind;
 
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableMultiset;
+import com.google.common.collect.Lists;
 import org.junit.Test;
 
 import java.util.LinkedHashSet;

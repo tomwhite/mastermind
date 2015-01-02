@@ -8,10 +8,12 @@ import org.jacop.core.Store;
 import org.jacop.search.*;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.tom_e_white.mastermind.Scores.Score.*;
-import static com.tom_e_white.mastermind.Scores.move;
 
 /**
  * Plays a game of Mastermind.
@@ -20,14 +22,14 @@ public class Game {
 
     private static final int MAX_MOVES = 8;
     public static final int NUM_POSITIONS = 4;
-    private static final Set<Integer> ALL_POS = ImmutableSet.copyOf(Sets.newLinkedHashSet(Lists.newArrayList(0, 1, 2, 3)));
+    public static final Set<Integer> ALL_POS = ImmutableSet.copyOf(Sets.newLinkedHashSet(Lists.newArrayList(0, 1, 2, 3)));
 
     private static final int REPORT_NUM_SOLUTIONS = 0;
     private static final boolean VERBOSE = false;
     
     private Scorer scorer;
-    private List<List<Integer>> moves;
-    private Map<List<Integer>, Multiset<Scores.Score>> scores;
+    private List<Move> moves;
+    private Map<Move, Multiset<Scores.Score>> scores;
     private Store store;
     protected IntVar[] pegs;
 
@@ -41,9 +43,9 @@ public class Game {
         for (int pos = 0; pos < pegs.length; pos++) {
             pegs[pos] = new IntVar(store, "peg" + pos, 0, 5);
         }
-        List<List<Integer>> staticMoves = Lists.newArrayList(
-            move(0, 1, 2, 3),
-            move(4, 1, 2, 3)
+        List<Move> staticMoves = Lists.newArrayList(
+            new Move(0, 1, 2, 3),
+            new Move(4, 1, 2, 3)
         );
         int moveCount = 0;
         while (moveCount < MAX_MOVES - 1) {
@@ -62,7 +64,7 @@ public class Game {
             makeMove(search());
         }
         List<Multiset<Scores.Score>> scoresList = Lists.newArrayList();
-        for (List<Integer> move : moves) {
+        for (Move move : moves) {
             scoresList.add(scores.get(move));
         }
         return new Result(solutionsCount, hasWon(), moves, scoresList);
@@ -75,7 +77,7 @@ public class Game {
     /**
      * Find the first solution and return it.
      */
-    private List<Integer> search() {
+    private Move search() {
         Search<IntVar> search = new DepthFirstSearch<IntVar>();
         SelectChoicePoint<IntVar> select =
                 new InputOrderSelect<IntVar>(store, pegs,
@@ -91,20 +93,21 @@ public class Game {
             throw new IllegalStateException("No solutions found for " + this);
         }
 
-        List<Integer> solution = Lists.newArrayList();
+        Move move = null;
         int numberOfSolutions = search.getSolutionListener().solutionsNo();
         for (int i = 1; i <= numberOfSolutions; i++) {
-            solution.clear();
+            List<Integer> solution = Lists.newArrayList();
             Domain[] sol = search.getSolutionListener().getSolution(i);
             for (Domain d : sol) {
                 solution.add(d.valueEnumeration().nextElement()); // convert domain to int
             }
-            if (moves.contains(solution)) {
+            move = new Move(solution);
+            if (moves.contains(move)) {
                 continue;
             }
             break;
         }
-        return solution;
+        return move;
     }
 
     /**
@@ -134,7 +137,7 @@ public class Game {
 
     private void reportGame(Search<IntVar> search) {
         System.out.println("Report: " + this);
-        for (List<Integer> move : moves) {
+        for (Move move : moves) {
             System.out.println(move + "; " + scores.get(move));
         }
         search.printAllSolutions();
@@ -143,7 +146,7 @@ public class Game {
     /**
      * Make the given move, and return the number of solutions.
      */
-    private int makeMove(List<Integer> move) {
+    private int makeMove(Move move) {
         moves.add(move);
 
         Multiset<Scores.Score> score = scorer.score(move);
@@ -152,7 +155,7 @@ public class Game {
         impose(scoreConstraint(move, score));
 
         if (moves.size() > 1) {
-            for (List<Integer> previousMove : moves) {
+            for (Move previousMove : moves) {
                 imposeDiffConstraints(previousMove, move);
             }
         }
@@ -215,7 +218,7 @@ public class Game {
     /**
      * A constraint for a normal move.
      */
-    private PrimitiveConstraint scoreConstraint(List<Integer> move, Multiset<Scores.Score> score) {
+    private PrimitiveConstraint scoreConstraint(Move move, Multiset<Scores.Score> score) {
         while (score.size() < ALL_POS.size()) {
             score.add(NONE);
         }
@@ -239,7 +242,7 @@ public class Game {
                     moveConstraints.add(whiteConstraint(col, pos));
                     possibleRedPos.remove(pos); // red can't actually appear where white does
                 } else if (s.equals(NONE)) {
-                    if (hasDistinctColours(move)) {
+                    if (move.hasDistinctColours()) {
                         // if move's colours are all different then col doesn't appear anywhere
                         moveConstraints.add(noneConstraint(col));
                     } else {
@@ -261,22 +264,10 @@ public class Game {
         return new Or(constraints);
     }
 
-    private Set<Integer> diff(List<Integer> move1, List<Integer> move2) {
-        Set<Integer> positions = Sets.newHashSet();
-        for (int pos : ALL_POS) {
-            if (!move1.get(pos).equals(move2.get(pos))) {
-                positions.add(pos);
-            }
-        }
-        return positions;
-    }
 
-    private boolean hasDistinctColours(List<Integer> move) {
-        return Sets.newHashSet(move).size() == NUM_POSITIONS;
-    }
 
-    private void imposeDiffConstraints(List<Integer> move1, List<Integer> move2) {
-        Set<Integer> diff = diff(move1, move2);
+    private void imposeDiffConstraints(Move move1, Move move2) {
+        Set<Integer> diff = move1.diff(move2);
         if (VERBOSE) {
             System.out.println(this);
             System.out.println(move1 + "; " + scores.get(move1));
@@ -289,7 +280,7 @@ public class Game {
             imposeDiff2Constraints(move1, move2, diff);
         }
     }
-    private void imposeDiff1Constraints(List<Integer> move1, List<Integer> move2, Set<Integer> diff) {
+    private void imposeDiff1Constraints(Move move1, Move move2, Set<Integer> diff) {
         int diffPos = Iterables.getOnlyElement(diff);
         
         Multiset<Scores.Score> score1 = scores.get(move1);
@@ -313,7 +304,7 @@ public class Game {
         } else if (wd == 1) {
             impose(whiteConstraint(newCol, diffPos));
             impose(noneConstraint(oldCol, diffPos));
-            if (hasDistinctColours(move1) && hasDistinctColours(move2)) {
+            if (move1.hasDistinctColours() && move2.hasDistinctColours()) {
                 if (rd == 0) {
                     impose(noneConstraint(oldCol));
                 } else if (rd == -1) {
@@ -323,7 +314,7 @@ public class Game {
         } else if (wd == -1) {
             impose(whiteConstraint(oldCol, diffPos));
             impose(noneConstraint(newCol, diffPos));
-            if (hasDistinctColours(move1) && hasDistinctColours(move2)) {
+            if (move1.hasDistinctColours() && move2.hasDistinctColours()) {
                 if (rd == 0) {
                     impose(noneConstraint(newCol));
                 } else if (rd == 1) {
@@ -333,7 +324,7 @@ public class Game {
         }
     }
 
-    private void imposeDiff2Constraints(List<Integer> move1, List<Integer> move2, Set<Integer> diff) {
+    private void imposeDiff2Constraints(Move move1, Move move2, Set<Integer> diff) {
         Multiset<Scores.Score> score1 = scores.get(move1);
         Multiset<Scores.Score> score2 = scores.get(move2);
 

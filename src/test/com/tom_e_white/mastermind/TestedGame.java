@@ -3,8 +3,6 @@ package com.tom_e_white.mastermind;
 import org.jacop.constraints.*;
 import org.jacop.core.IntVar;
 
-import java.util.List;
-
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -13,9 +11,9 @@ import static org.junit.Assert.fail;
  * (known) secret. If it is not then the test fails.
  */
 public class TestedGame extends Game {
-    private List<Integer> secret;
+    private Move secret;
 
-    public TestedGame(List<Integer> secret) {
+    public TestedGame(Move secret) {
         this.secret = secret;
     }
 

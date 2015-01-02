@@ -2,17 +2,15 @@ package com.tom_e_white.mastermind;
 
 import com.google.common.collect.Multiset;
 
-import java.util.List;
-
 public class ComputerScorer implements Scorer {
-    private List<Integer> secret;
+    private Move secret;
 
-    public ComputerScorer(List<Integer> secret) {
+    public ComputerScorer(Move secret) {
         this.secret = secret;
     }
 
     @Override
-    public Multiset<Scores.Score> score(List<Integer> move) {
+    public Multiset<Scores.Score> score(Move move) {
         return Scores.score(secret, move);
     }
 }

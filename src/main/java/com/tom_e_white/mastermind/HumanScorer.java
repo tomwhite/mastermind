@@ -6,14 +6,13 @@ import com.google.common.collect.Multiset;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.List;
 
 public class HumanScorer implements Scorer {
 
     private BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
     @Override
-    public Multiset<Scores.Score> score(List<Integer> move) {
+    public Multiset<Scores.Score> score(Move move) {
         System.out.println("My move: " + toString(move));
         System.out.println("Enter white and red pegs (in any order). For example, rrw for two reds and a white.");
         try {
@@ -36,7 +35,7 @@ public class HumanScorer implements Scorer {
         }
     }
 
-    private String toString(List<Integer> move) {
+    private String toString(Move move) {
         StringBuilder sb = new StringBuilder();
         for (int i : move) {
             sb.append(Peg.values()[i]).append(" ");
