@@ -1,9 +1,6 @@
 package com.tom_e_white.mastermind;
 
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multiset;
-import com.google.common.collect.Multisets;
+import com.google.common.collect.*;
 import org.junit.Test;
 
 import java.util.List;
@@ -16,6 +13,7 @@ public class TestGame {
     public void testAllGames() {
         int numLost = 0;
         Multiset<Integer> solutionsHist = HashMultiset.create();
+        Multiset<Integer> totalMovesHist = TreeMultiset.create();
         Multiset<List<Multiset<Scores.Score>>> scoresHist = HashMultiset.create();
         List<List<List<Integer>>> lostMoves = Lists.newArrayList();
         List<List<Multiset<Scores.Score>>> lostScores = Lists.newArrayList();
@@ -28,6 +26,7 @@ public class TestGame {
                         Game game = new Game(secret);
                         Result result = game.playGame(new ComputerScorer(secret));
                         solutionsHist.add(result.getSolutionsCount());
+                        totalMovesHist.add(result.getMoves().size());
                         List<Multiset<Scores.Score>> scores = result.getScores();
                         scores.remove(scores.size() - 1); // remove last move
                         scoresHist.add(scores);
@@ -53,6 +52,7 @@ public class TestGame {
         for (List<Multiset<Scores.Score>> scores : lostScores) {
             System.out.println(scoresHist.count(scores));
         }
+        System.out.println("Moves: " + totalMovesHist);
         System.out.println("Avg moves: " +(totalMoves/1296));
     }
 
