@@ -16,10 +16,13 @@ import static org.junit.Assert.*;
 
 public class Game {
 
+    private static final int MAX_MOVES = 8;
+    public static final int NUM_POSITIONS = 4;
+    private static final Set<Integer> ALL_POS = ImmutableSet.copyOf(Sets.newLinkedHashSet(Lists.newArrayList(0, 1, 2, 3)));
+
     private static final int REPORT_NUM_SOLUTIONS = 0;
     private static final boolean VERBOSE = false;
-    private Set<Integer> ALL_POS = ImmutableSet.copyOf(Sets.newLinkedHashSet(Lists.newArrayList(0, 1, 2, 3)));
-
+    
     private List<Integer> secret;
     private Store store;
     private IntVar[] pegs;
@@ -41,7 +44,7 @@ public class Game {
         scores = Maps.newHashMap();
         this.scorer = scorer;
         store = new Store();
-        pegs = new IntVar[4];
+        pegs = new IntVar[NUM_POSITIONS];
         for (int i = 0; i < pegs.length; i++) {
             pegs[i] = new IntVar(store, "peg" + i, 0, 5);
         }
@@ -50,7 +53,7 @@ public class Game {
             move(4, 1, 2, 3)
         );
         int moveCount = 0;
-        while (moveCount < 7) {
+        while (moveCount < MAX_MOVES - 1) {
             if (moveCount < staticMoves.size()) {
                 makeMove(staticMoves.get(moveCount));
             } else {
@@ -76,6 +79,9 @@ public class Game {
         return scores.get(moves.get(moves.size() - 1)).equals(ImmutableMultiset.of(WHITE, WHITE, WHITE, WHITE));
     }
 
+    /**
+     * Find the first solution and return it.
+     */
     private List<Integer> search() {
         Search<IntVar> search = new DepthFirstSearch<IntVar>();
         SelectChoicePoint<IntVar> select =
@@ -103,12 +109,14 @@ public class Game {
             if (moves.contains(solution)) {
                 continue;
             }
-            break; // just return first to start with (unless already played it)
+            break;
         }
-        assertEquals(4, solution.size());
         return solution;
     }
 
+    /**
+     * Return the number of possible solutions at this point in the game.
+     */
     private int countSolutions(boolean verbose) {
         Search<IntVar> search = new DepthFirstSearch<IntVar>();
         SelectChoicePoint<IntVar> select =
@@ -139,6 +147,9 @@ public class Game {
         search.printAllSolutions();
     }
 
+    /**
+     * Make the given move, and return the number of solutions.
+     */
     private int makeMove(List<Integer> move) {
         moves.add(move);
 
@@ -216,7 +227,8 @@ public class Game {
         while (score.size() < ALL_POS.size()) {
             score.add(NONE);
         }
-        if (score.count(NONE) == 4) {
+        // if no whites or reds then none of the colours appear anywhere
+        if (score.count(NONE) == NUM_POSITIONS) {
             ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
             for (int i : ALL_POS) {
                 constraints.add(noneConstraint(move.get(i)));
@@ -311,7 +323,7 @@ public class Game {
     }
 
     private boolean hasDistinctColours(List<Integer> move) {
-        return Sets.newHashSet(move).size() == 4;
+        return Sets.newHashSet(move).size() == NUM_POSITIONS;
     }
 
     private void imposeDiffConstraints(List<Integer> move1, List<Integer> move2) {

@@ -88,18 +88,18 @@ public class Scores {
         Multiset<Score> scores = EnumMultiset.create(Score.class);
         List<Boolean> matched = Arrays.asList(false, false, false, false);
         List<Boolean> used = Arrays.asList(false, false, false, false);
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < Game.NUM_POSITIONS; i++) {
             if (move.get(i).equals(secret.get(i))) {
                 scores.add(WHITE);
                 matched.set(i, true);
                 used.set(i, true);
             }
         }
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < Game.NUM_POSITIONS; i++) {
             if (matched.get(i)) {
                 continue;
             }
-            for (int j = 0; j < 4; j++) {
+            for (int j = 0; j < Game.NUM_POSITIONS; j++) {
                 if (i != j && !used.get(j) && move.get(i).equals(secret.get(j))) {
                     scores.add(RED);
                     used.set(j, true);
