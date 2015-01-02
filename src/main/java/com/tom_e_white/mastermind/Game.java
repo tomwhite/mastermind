@@ -213,19 +213,12 @@ public class Game {
      * A constraint for a normal move.
      */
     private PrimitiveConstraint scoreConstraint(List<Integer> move, Multiset<Scores.Score> score) {
-        return scoreConstraint(move, score, ALL_POS);
-    }
-
-    /**
-     * A constraint for a subset of the positions in a move.
-     */
-    private PrimitiveConstraint scoreConstraint(List<Integer> move, Multiset<Scores.Score> score, Set<Integer> positions) {
-        while (score.size() < positions.size()) {
+        while (score.size() < ALL_POS.size()) {
             score.add(NONE);
         }
         if (score.count(NONE) == 4) {
             ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
-            for (int i : positions) {
+            for (int i : ALL_POS) {
                 constraints.add(noneConstraint(move.get(i)));
             }
             return new And(constraints);
@@ -235,22 +228,24 @@ public class Game {
             ArrayList<PrimitiveConstraint> moveConstraints = Lists.newArrayList();
             Set<Integer> possiblePos = Sets.newLinkedHashSet(Lists.newArrayList(0, 1, 2, 3));
             int offset = 0;
-            for (int i : positions) {
+            for (int i : ALL_POS) {
                 Scores.Score s = combo.get(offset);
+                int col = move.get(i);
                 if (s.equals(WHITE)) {
-                    moveConstraints.add(whiteConstraint(move.get(i), i));
+                    moveConstraints.add(whiteConstraint(col, i));
                     possiblePos.remove(i); // red can't actually appear where white does
                 } else if (s.equals(NONE)) {
                     if (hasDistinctColours(move)) {
-                        moveConstraints.add(noneConstraint(move.get(i)));
+                        // if move's colours are all different then col doesn't appear anywhere
+                        moveConstraints.add(noneConstraint(col));
                     } else {
-                        moveConstraints.add(noneConstraint(move.get(i), i));
+                        moveConstraints.add(noneConstraint(col, i));
                     }
                 }
                 offset++;
             }
             offset = 0;
-            for (int i : positions) {
+            for (int i : ALL_POS) {
                 Scores.Score s = combo.get(offset);
                 if (s.equals(RED)) {
                     moveConstraints.add(redConstraint(move.get(i), i, possiblePos));
@@ -347,14 +342,7 @@ public class Game {
         if (wd == 0) {
             impose(noneConstraint(oldCol, diffPos)); // oldCol does not appear in diffPos
             impose(noneConstraint(newCol, diffPos)); // newCol does not appear in diffPos
-            if (rd == 0) {
-                // TODO: can investigate this better
-                if (hasDistinctColours(move1) && hasDistinctColours(move2)) {
-                    // either oldCol and newCol don't appear anywhere, or they are both reds in diffPos
-                    PrimitiveConstraint c = new And(noneConstraint(oldCol), noneConstraint(newCol));
-                    impose(new Or(new And(redConstraint(oldCol, diffPos), redConstraint(newCol, diffPos)), c));
-                }
-            } else if (rd == 1) {
+            if (rd == 1) {
                 impose(redConstraint(newCol, diffPos));
                 impose(noneConstraint(oldCol));
             } else if (rd == -1) {
