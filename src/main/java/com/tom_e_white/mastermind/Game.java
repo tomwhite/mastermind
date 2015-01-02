@@ -14,6 +14,9 @@ import static com.tom_e_white.mastermind.Scores.Score.*;
 import static com.tom_e_white.mastermind.Scores.move;
 import static org.junit.Assert.*;
 
+/**
+ * Plays a game of Mastermind.
+ */
 public class Game {
 
     private static final int MAX_MOVES = 8;
@@ -39,14 +42,14 @@ public class Game {
     }
 
     @SuppressWarnings("unchecked")
-    public Result playGame(Scorer scorer) {
+    public Result play(Scorer scorer) {
         moves = Lists.newArrayList();
         scores = Maps.newHashMap();
         this.scorer = scorer;
         store = new Store();
         pegs = new IntVar[NUM_POSITIONS];
-        for (int i = 0; i < pegs.length; i++) {
-            pegs[i] = new IntVar(store, "peg" + i, 0, 5);
+        for (int pos = 0; pos < pegs.length; pos++) {
+            pegs[pos] = new IntVar(store, "peg" + pos, 0, 5);
         }
         List<List<Integer>> staticMoves = Lists.newArrayList(
             move(0, 1, 2, 3),
@@ -193,11 +196,11 @@ public class Game {
      */
     private PrimitiveConstraint redConstraint(int colour, int pos, Set<Integer> possiblePos) {
         ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
-        for (int i : possiblePos) {
-            if (i == pos) {
+        for (int p : possiblePos) {
+            if (p == pos) {
                 continue;
             }
-            constraints.add(new XeqC(pegs[i], colour));
+            constraints.add(new XeqC(pegs[p], colour));
         }
         return new And(noneConstraint(colour, pos), new Or(constraints));
     }
@@ -214,8 +217,8 @@ public class Game {
      */
     private PrimitiveConstraint noneConstraint(int colour) {
         ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
-        for (int i : ALL_POS) {
-            constraints.add(noneConstraint(colour, i));
+        for (int pos : ALL_POS) {
+            constraints.add(noneConstraint(colour, pos));
         }
         return new And(constraints);
     }
@@ -230,37 +233,37 @@ public class Game {
         // if no whites or reds then none of the colours appear anywhere
         if (score.count(NONE) == NUM_POSITIONS) {
             ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
-            for (int i : ALL_POS) {
-                constraints.add(noneConstraint(move.get(i)));
+            for (int pos : ALL_POS) {
+                constraints.add(noneConstraint(move.get(pos)));
             }
             return new And(constraints);
         }
         ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
         for (List<Scores.Score> combo : Scores.scoreCombinations(score)) {
             ArrayList<PrimitiveConstraint> moveConstraints = Lists.newArrayList();
-            Set<Integer> possiblePos = Sets.newLinkedHashSet(Lists.newArrayList(0, 1, 2, 3));
+            Set<Integer> possibleRedPos = Sets.newLinkedHashSet(Lists.newArrayList(0, 1, 2, 3));
             int offset = 0;
-            for (int i : ALL_POS) {
+            for (int pos : ALL_POS) {
                 Scores.Score s = combo.get(offset);
-                int col = move.get(i);
+                int col = move.get(pos);
                 if (s.equals(WHITE)) {
-                    moveConstraints.add(whiteConstraint(col, i));
-                    possiblePos.remove(i); // red can't actually appear where white does
+                    moveConstraints.add(whiteConstraint(col, pos));
+                    possibleRedPos.remove(pos); // red can't actually appear where white does
                 } else if (s.equals(NONE)) {
                     if (hasDistinctColours(move)) {
                         // if move's colours are all different then col doesn't appear anywhere
                         moveConstraints.add(noneConstraint(col));
                     } else {
-                        moveConstraints.add(noneConstraint(col, i));
+                        moveConstraints.add(noneConstraint(col, pos));
                     }
                 }
                 offset++;
             }
             offset = 0;
-            for (int i : ALL_POS) {
+            for (int pos : ALL_POS) {
                 Scores.Score s = combo.get(offset);
                 if (s.equals(RED)) {
-                    moveConstraints.add(redConstraint(move.get(i), i, possiblePos));
+                    moveConstraints.add(redConstraint(move.get(pos), pos, possibleRedPos));
                 }
                 offset++;
             }
@@ -282,12 +285,12 @@ public class Game {
     private boolean constraintToExpr(PrimitiveConstraint c) {
         if (c instanceof XeqC) {
             IntVar x = ((XeqC) c).x;
-            int i = 0;
+            int pos = 0;
             for (IntVar peg : pegs) {
                 if (x == peg) {
-                    return secret.get(i) == ((XeqC) c).c;
+                    return secret.get(pos) == ((XeqC) c).c;
                 }
-                i++;
+                pos++;
             }
             fail("Illegal");
         }
@@ -314,9 +317,9 @@ public class Game {
 
     private Set<Integer> diff(List<Integer> move1, List<Integer> move2) {
         Set<Integer> positions = Sets.newHashSet();
-        for (int i : ALL_POS) {
-            if (!move1.get(i).equals(move2.get(i))) {
-                positions.add(i);
+        for (int pos : ALL_POS) {
+            if (!move1.get(pos).equals(move2.get(pos))) {
+                positions.add(pos);
             }
         }
         return positions;
@@ -428,7 +431,7 @@ public class Game {
 
         Scorer scorer = new HumanScorer();
         Game game = new Game();
-        Result result = game.playGame(scorer);
+        Result result = game.play(scorer);
         if (result.hasWon()) {
             System.out.println("I won! Thanks for playing.");
         } else {

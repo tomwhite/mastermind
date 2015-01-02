@@ -24,7 +24,7 @@ public class TestGame {
                     for (int l = 0; l < 6; l++) {
                         List<Integer> secret = move(i, j, k, l);
                         Game game = new Game(secret);
-                        Result result = game.playGame(new ComputerScorer(secret));
+                        Result result = game.play(new ComputerScorer(secret));
                         solutionsHist.add(result.getSolutionsCount());
                         totalMovesHist.add(result.getMoves().size());
                         List<Multiset<Scores.Score>> scores = result.getScores();
