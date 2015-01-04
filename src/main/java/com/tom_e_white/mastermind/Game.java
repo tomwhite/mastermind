@@ -228,7 +228,7 @@ public class Game {
             return new And(constraints);
         }
         ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
-        for (List<Score.Peg> combo : score.combinations()) {
+        for (List<Score.Peg> combo : score.permutations()) {
             ArrayList<PrimitiveConstraint> moveConstraints = Lists.newArrayList();
             Set<Integer> possibleRedPos = Sets.newLinkedHashSet(Lists.newArrayList(0, 1, 2, 3));
             int offset = 0;

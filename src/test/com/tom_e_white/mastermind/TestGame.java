@@ -53,5 +53,15 @@ public class TestGame {
         System.out.println("Moves: " + totalMovesHist);
         System.out.println("Avg moves: " +(totalMoves/1296));
     }
-
+    
+    @Test
+    public void testSingleGame() {
+        Move secret = new Move(0, 4, 5, 5);
+        Game game = new TestedGame(secret);
+        Result result = game.play(new ComputerScorer(secret));
+        System.out.println("Setter: " + secret);
+        for (int i = 0; i < result.getMoves().size(); i++) {
+            System.out.println((i + 1) + ". " + result.getMoves().get(i) + "[" + result.getScores().get(i) + "]");
+        }
+    }
 }

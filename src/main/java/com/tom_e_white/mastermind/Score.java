@@ -66,7 +66,7 @@ public class Score {
         return pegs.count(peg);
     }
 
-    public Set<List<Peg>> combinations() {
+    public Set<List<Peg>> permutations() {
         return Sets.newLinkedHashSet(Collections2.permutations(pegs));
     }
 
@@ -87,6 +87,12 @@ public class Score {
 
     @Override
     public String toString() {
-        return pegs.toString();
+        StringBuilder sb = new StringBuilder();
+        for (Peg peg : pegs) {
+            if (peg != NONE) {
+                sb.append(peg.toString().charAt(0));
+            }
+        }
+        return sb.toString();
     }
 }

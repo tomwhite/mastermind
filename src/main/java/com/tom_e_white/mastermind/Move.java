@@ -16,7 +16,7 @@ public class Move {
      * Colours of pegs for the moves.
      */
     public static enum Peg {
-        Blue, Green, Purple, Orange, Yellow, Pink
+        BLUE, GREEN, PURPLE, ORANGE, YELLOW, PINK
     }
 
     private List<Integer> pegs;
@@ -67,9 +67,8 @@ public class Move {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         for (int i : pegs) {
-            sb.append(Peg.values()[i]).append(" ");
+            sb.append(Peg.values()[i].toString().toLowerCase()).append(" ");
         }
         return sb.toString();
-
     }
 }

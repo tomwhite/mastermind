@@ -14,7 +14,7 @@ import static org.junit.Assert.assertEquals;
 public class TestScore {
 
     @Test
-    public void test() {
+    public void testScore() {
         assertEquals(new Score(WHITE, WHITE, WHITE, WHITE),
                 score(move(0, 1, 2, 3), move(0, 1, 2, 3)));
         assertEquals(new Score(WHITE, WHITE, WHITE),
@@ -32,12 +32,12 @@ public class TestScore {
     }
 
     @Test
-    public void testScoreCombinations() {
+    public void testPermutations() {
         assertEquals(set(Lists.newArrayList(NONE, NONE, NONE, NONE)),
-                new Score(NONE, NONE, NONE, NONE).combinations());
+                new Score(NONE, NONE, NONE, NONE).permutations());
         assertEquals(set(Lists.newArrayList(WHITE, NONE, NONE, NONE), Lists.newArrayList(NONE, WHITE, NONE, NONE),
                         Lists.newArrayList(NONE, NONE, WHITE, NONE), Lists.newArrayList(NONE, NONE, NONE, WHITE)),
-                new Score(WHITE, NONE, NONE, NONE).combinations());
+                new Score(WHITE, NONE, NONE, NONE).permutations());
         assertEquals(set(Lists.newArrayList(NONE, NONE, WHITE, RED),
                         Lists.newArrayList(NONE, NONE, RED, WHITE),
                         Lists.newArrayList(NONE, WHITE, NONE, RED),
@@ -50,7 +50,7 @@ public class TestScore {
                         Lists.newArrayList(RED, NONE, NONE, WHITE),
                         Lists.newArrayList(RED, NONE, WHITE, NONE),
                         Lists.newArrayList(RED, WHITE, NONE, NONE)),
-                new Score(WHITE, RED, NONE, NONE).combinations());
+                new Score(WHITE, RED, NONE, NONE).permutations());
     }
     
     private Move move(int a, int b, int c, int d) {
