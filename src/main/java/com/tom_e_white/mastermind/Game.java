@@ -45,7 +45,7 @@ public class Game {
         }
         List<Move> staticMoves = Lists.newArrayList(
             new Move(0, 1, 2, 3),
-            new Move(4, 1, 2, 3)
+            new Move(2, 3, 4, 5)
         );
         int moveCount = 0;
         while (moveCount < MAX_MOVES - 1) {
@@ -154,11 +154,14 @@ public class Game {
 
         impose(scoreConstraint(move, score));
 
+        // This is not needed to improve the game performance - see README
+        /*
         if (moves.size() > 1) {
             for (Move previousMove : moves) {
                 imposeDiffConstraints(previousMove, move);
             }
         }
+        */
         return countSolutions(false);
     }
 

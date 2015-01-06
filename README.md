@@ -13,18 +13,17 @@ Here is an example game. The setter chooses `blue yellow pink pink` and the gues
 
 ```
 1. blue green purple orange [W]
-2. yellow green purple orange [R]
-3. blue blue blue yellow [RW]
-4. blue yellow yellow blue [WW]
-5. blue yellow pink pink [WWWW]
+2. purple orange yellow pink [RW]
+3. blue yellow blue pink [WWW]
+4. blue yellow pink pink [WWWW]
 ```
 
 The score pegs are shown in brackets after each move. The first move gets a single white peg, since only one of the
 colours out of `blue green purple orange` appears in the setter's choice (blue), and it appears in the same position.
-On the second move, only yellow appears, and in the wrong position, so it gets a red peg. On the third move, the blue is
-in the correct position, but yellow is not.
+On the second move, yellow and pink appear, but only pink is in the correct position, so the move gets a white peg and
+a red peg. On the third move, only the second blue peg is incorrect.
 
-The game is over in five moves since the guesser gets the correct answer on the fifth move.
+The game is over in four moves since the guesser gets the correct answer on the fourth move.
 
 An Algorithm
 ============
@@ -36,16 +35,13 @@ possible to make it lose sometimes by adding a constraint only a fixed percentag
 The algorithm works as follows:
 
 1. The program maintains a list of constraints over the solution space of 6<sup>4</sup> = 1296 solutions.
-2. The first two moves explore the solution space statically. The idea is that moves with distinct colours are played,
-each of which differs in one position to a previous move. The moves are (where colours are labelled 0 to 5):
+2. The first two moves explore the solution space statically. The moves are (where colours are labelled 0 to 5):
     * 0, 1, 2, 3
-    * 4, 1, 2, 3
+    * 2, 3, 4, 5
 3. The remaining moves search the space of remaining solutions.
 4. Each move and its associated score is used to constrain the solution space.
-5. Each move is compared to previous moves, and the _difference_ between it and each previous move is used to constrain
-the space further.
 
-Points 4. and 5. deserve further explanation. To understand how a score assigned to a move generates constraints,
+To understand how a score assigned to a move generates constraints,
 consider the simple case where the score is one white peg and no red pegs. For the example game earlier, the first move
 is `blue green purple orange` which gets a single `W`. From the point of view of the guesser, the `W` could be in any of
 the four positions:
@@ -99,10 +95,20 @@ _except_ where that `R` appears. Furthermore, it may not not appear in a `W` pos
 In general, each permutation of the score is turned into a constraint in a similar way, and the resulting constraints
 are all OR'd together. For example, if the score is `RW`, then the permutations of (`R`, `W`, `N`, `N`) are taken.
 
+Constraints from Differences
+============================
 
+To win the game, it's sufficient to only consider the constraints generated from each move. However, when I first wrote
+the program I missed the `N` constraints that ruled out some colours _not_ appearing. So I added constraints generated
+by looking at the _difference_ between pairs of moves. For example, if the first two moves were:
 
+```
+1. blue green purple orange [W]
+2. yellow green purple orange [R]
+```
 
-
+then we know that since the two moves differ only in a single peg (the first) the change from a white peg to a red peg
+means that the blue peg from the first move is `W`, while the yellow peg from the second peg is `R`. 
 
  
 
