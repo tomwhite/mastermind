@@ -19,18 +19,22 @@ public class Move {
         BLUE, GREEN, PURPLE, ORANGE, YELLOW, PINK
     }
 
-    private List<Integer> pegs;
-    
+    private List<Peg> pegs;
+
     public Move(int a, int b, int c, int d) {
+        this(Peg.values()[a], Peg.values()[b], Peg.values()[c], Peg.values()[d]);
+    }
+    
+    public Move(Peg a, Peg b, Peg c, Peg d) {
         pegs = Arrays.asList(a, b, c, d);
     }
 
-    public Move(List<Integer> pegs) {
+    public Move(List<Peg> pegs) {
         Preconditions.checkArgument(pegs.size() == Game.NUM_POSITIONS);
         this.pegs = pegs;
     }
 
-    public int get(int pos) {
+    public Peg get(int pos) {
         return pegs.get(pos);
     }
 
@@ -66,8 +70,8 @@ public class Move {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        for (int i : pegs) {
-            sb.append(Peg.values()[i].toString().toLowerCase()).append(" ");
+        for (Peg peg : pegs) {
+            sb.append(peg.toString().toLowerCase()).append(" ");
         }
         return sb.toString();
     }

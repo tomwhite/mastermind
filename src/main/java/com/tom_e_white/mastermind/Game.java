@@ -96,10 +96,10 @@ public class Game {
         Move move = null;
         int numberOfSolutions = search.getSolutionListener().solutionsNo();
         for (int i = 1; i <= numberOfSolutions; i++) {
-            List<Integer> solution = Lists.newArrayList();
+            List<Move.Peg> solution = Lists.newArrayList();
             Domain[] sol = search.getSolutionListener().getSolution(i);
             for (Domain d : sol) {
-                solution.add(d.valueEnumeration().nextElement()); // convert domain to int
+                solution.add(Move.Peg.values()[d.valueEnumeration().nextElement()]); // convert domain to int
             }
             move = new Move(solution);
             if (moves.contains(move)) {
@@ -175,27 +175,27 @@ public class Game {
     /**
      * Colour appears in given position
      */
-    private PrimitiveConstraint whiteConstraint(int colour, int pos) {
-        return new XeqC(pegs[pos], colour);
+    private PrimitiveConstraint whiteConstraint(Move.Peg colour, int pos) {
+        return new XeqC(pegs[pos], colour.ordinal());
     }
 
     /**
      * Colour does not appear in given position but does appear in another position
      */
-    private PrimitiveConstraint redConstraint(int colour, int pos) {
+    private PrimitiveConstraint redConstraint(Move.Peg colour, int pos) {
         return redConstraint(colour, pos, ALL_POS);
     }
 
     /**
      * Colour does not appear in given position but does appear in another position (restricted from full set of positions)
      */
-    private PrimitiveConstraint redConstraint(int colour, int pos, Set<Integer> possiblePos) {
+    private PrimitiveConstraint redConstraint(Move.Peg colour, int pos, Set<Integer> possiblePos) {
         ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
         for (int p : possiblePos) {
             if (p == pos) {
                 continue;
             }
-            constraints.add(new XeqC(pegs[p], colour));
+            constraints.add(new XeqC(pegs[p], colour.ordinal()));
         }
         return new And(noneConstraint(colour, pos), new Or(constraints));
     }
@@ -203,14 +203,14 @@ public class Game {
     /**
      * Colour does not appear in given position
      */
-    private PrimitiveConstraint noneConstraint(int colour, int pos) {
-        return new Not(new XeqC(pegs[pos], colour));
+    private PrimitiveConstraint noneConstraint(Move.Peg colour, int pos) {
+        return new Not(new XeqC(pegs[pos], colour.ordinal()));
     }
 
     /**
      * Colour does not appear in any position
      */
-    private PrimitiveConstraint noneConstraint(int colour) {
+    private PrimitiveConstraint noneConstraint(Move.Peg colour) {
         ArrayList<PrimitiveConstraint> constraints = Lists.newArrayList();
         for (int pos : ALL_POS) {
             constraints.add(noneConstraint(colour, pos));
@@ -237,7 +237,7 @@ public class Game {
             int offset = 0;
             for (int pos : ALL_POS) {
                 Score.Peg s = combo.get(offset);
-                int col = move.get(pos);
+                Move.Peg col = move.get(pos);
                 if (s.equals(WHITE)) {
                     moveConstraints.add(whiteConstraint(col, pos));
                     possibleRedPos.remove(pos); // red can't actually appear where white does
@@ -286,8 +286,8 @@ public class Game {
 
         int rd = score2.count(RED) - score1.count(RED);
         int wd = score2.count(WHITE) - score1.count(WHITE);
-        int oldCol = move1.get(diffPos);
-        int newCol = move2.get(diffPos);
+        Move.Peg oldCol = move1.get(diffPos);
+        Move.Peg newCol = move2.get(diffPos);
         if (wd == 0) {
             impose(noneConstraint(oldCol, diffPos)); // oldCol does not appear in diffPos
             impose(noneConstraint(newCol, diffPos)); // newCol does not appear in diffPos
@@ -336,14 +336,14 @@ public class Game {
         if (rc1 == 0 && rc2 == 0) {
             if (wd > 0) {
                 for (int i : diff) {
-                    int col = move1.get(i);
+                    Move.Peg col = move1.get(i);
                     for (int j : diff) {
                         impose(noneConstraint(col, j));
                     }
                 }
             } else if (wd < 0) {
                 for (int i : diff) {
-                    int col = move2.get(i);
+                    Move.Peg col = move2.get(i);
                     for (int j : diff) {
                         impose(noneConstraint(col, j));
                     }

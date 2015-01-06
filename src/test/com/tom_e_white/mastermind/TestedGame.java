@@ -38,7 +38,7 @@ public class TestedGame extends Game {
             int pos = 0;
             for (IntVar peg : pegs) {
                 if (x == peg) {
-                    return secret.get(pos) == ((XeqC) c).c;
+                    return secret.get(pos).ordinal() == ((XeqC) c).c;
                 }
                 pos++;
             }
