@@ -110,6 +110,14 @@ by looking at the _difference_ between pairs of moves. For example, if the first
 then we know that since the two moves differ only in a single peg (the first) the change from a white peg to a red peg
 means that the blue peg from the first move is `W`, while the yellow peg from the second peg is `R`. 
 
- 
+Playing a Game
+==============
 
+To play a game type the following at the command line:
 
+```bash
+mvn compile
+mvn exec:java -Dexec.mainClass=com.tom_e_white.mastermind.Game -q
+```
+
+Then follow the instructions shown in the console.
